@@ -1,9 +1,10 @@
 # Session State
 
 ## Current Task
-`/design-review design/gdd/game-concept.md` — second full review completed
-(9 specialists + creative-director synthesis), all 6 blocking items revised
-in-place. Awaiting a clean-context re-review to confirm the fixes hold.
+`/design-review design/gdd/game-concept.md` — round 3 (clean-context re-review)
+completed: 8 specialists + creative-director synthesis. Verdict: NEEDS REVISION,
+6 blocking items, all revised in-place this session. Awaiting a clean-context
+re-review to confirm these hold (round 4 verification pass).
 
 ## Progress Checklist
 - [x] Game concept written (`design/gdd/game-concept.md`)
@@ -12,77 +13,110 @@ in-place. Awaiting a clean-context re-review to confirm the fixes hold.
       (`prototypes/rincon-compartido-concept/REPORT.md`)
 - [x] Round 1 `/design-review` (full mode) — verdict: NEEDS REVISION, 8
       blocking items — all resolved
-- [x] Round 2 `/design-review` (full mode, 9 specialists: game-designer,
+- [x] Round 2 `/design-review` (full mode, 9 specialists) — verdict: NEEDS
+      REVISION, 6 blocking items — all resolved (see prior git history,
+      commit bcd0278)
+- [x] Round 3 `/design-review` (full mode, 8 specialists: game-designer,
       systems-designer, economy-designer, network-programmer, ux-designer,
-      gameplay-programmer, performance-analyst, godot-specialist, qa-lead +
-      creative-director synthesis) — verdict: NEEDS REVISION, 6 blocking
-      items — all resolved this session (see list below)
+      performance-analyst, godot-specialist, qa-lead + creative-director
+      synthesis) — verdict: NEEDS REVISION, 6 blocking items — all resolved
+      this session (see list below)
 - [ ] **Re-review in a fresh session** — run `/clear` then
-      `/design-review design/gdd/game-concept.md` again to confirm
+      `/design-review design/gdd/game-concept.md` again to confirm round 3's
+      fixes hold (this would be round 4 — creative-director explicitly
+      recommended this be a narrow verification pass, NOT another full
+      8-specialist adversarial round; the concept itself is sound, remaining
+      risk is in the edits just made, not the design)
 
-## Blocking Items Resolved This Session (2026-08-10, round 2 design-review)
-1. Threat-count contradiction: Technical Considerations table said "1 amenaza
-   por tipo" (implying 3) while MVP Definition/Scope Tiers said 1 total →
-   Content Volume row now reads "1 amenaza recurrente en total."
-2. Next Steps checklist had no gate for the two flagged technical spikes
-   (networking peer-discovery, touch-UX) or for `/create-architecture` →
-   added explicit checklist lines for both spikes and `/create-architecture`,
-   sequenced as gating, between `/map-systems` and `/design-system`.
-3. Softlock safeguard (auto-resolve threats for free) risked being the
-   dominant rational strategy, hollowing out Pillar 5's prevent/repair
-   trade-off → added explicit constraint: auto-resolve downtime must always
-   be worse in expected value than paying to prevent/repair.
-4. Host loss / mobile backgrounding was completely unaddressed given the
-   client/host (not P2P) architecture → added to Technical Risks + Open
-   Questions; MVP item 6 now splits transient network drop (retry <10s) from
-   structural failure (AP isolation / host loss — clear error, not infinite
-   retry).
-5. MVP core hypothesis ("negocian activamente," "varias sesiones," "se
-   sostiene") wasn't independently testable → rewrote with countable action
-   criteria (at least one economic action per player per threat window),
-   a named session count (3 sessions within 7 days, same pair), and a
-   concrete measurement instrument (return rate + 1-5 post-session question).
-6. MDA aesthetics priority table ranked Challenge (1) above Fellowship (2)
-   with no legend — contradicted the game's own interdependence-first Player
-   Fantasy → swapped to Fellowship=1, Challenge=2 (creative-director's
-   ruling) and added a "1 = highest priority" legend.
+## Blocking Items Resolved This Session (2026-08-10, round 3 design-review)
 
-Recommended (non-blocking, not yet applied — candidates for a future pass):
-session-length mismatch between Core Identity (30-120 min) and Target Player
-Profile (15-60 min) tables; Pillar 2's manual-advantage rule shape (flat vs.
-automation-relative) should be pinned before `/design-system`; role
-specialization risks an "interesting role" vs. "chores role" split; cutting
-the contribution-stats panel from MVP removes the only planned mitigation
-for the softlock free-rider risk (item 3) if that fix doesn't fully hold;
-monetization-adjacent systems (exotic pricing, 2nd-plot sink) flagged as
-possible-rework-not-just-tuning once a monetization model is chosen;
-godot-specialist flagged the "no built-in LAN discovery" claim and the
-VirtualJoystick mention as needing doc-verification wording rather than flat
-assertions.
+Key meta-finding from creative-director: round 2's fix to the MVP hypothesis
+(adding a 7-day/3-session/return-rate/survey instrument) was an
+over-correction — it measured co-presence not negotiation, didn't fit the
+MVP's own 4-8 week timeline, and required telemetry never added to scope.
+Replaced with a single-session, facilitator-observed criterion instead of
+patched again.
+
+1. **MVP core hypothesis rewritten** (was: multi-session/7-day/return-rate/
+   survey instrument that regressed from what the prototype actually showed
+   and required unbuilt instrumentation) → now: single-session,
+   facilitator-observed criterion — both players must exchange an explicit
+   proposal about how to respond *before* either spends, matching what the
+   prototype actually demonstrated. Overclaim in the prior note (attributing
+   multi-session criteria to the prototype) corrected.
+2. **Free-rider risk was undocumented, not resolved** → added explicit Open
+   Question: the softlock safeguard governs "pay vs. auto-resolve," not
+   "which player pays"; steady-state free-riding in normal (non-threat) play
+   remains unmitigated in MVP since the contribution-stats panel was cut.
+3. **Sink runway risk** (MVP has exactly one purchasable sink — the 2nd plot
+   — beyond prevent/repair, reproducing the prototype's "nothing to spend
+   on" boredom finding) → added as an explicit Design Risk with a playtest
+   trigger to watch for and a fallback (pull forward a cheap Vertical-Slice
+   sink if money runs out mid-MVP-test).
+4. **Partner-awareness UI gap** (2 separate devices, but no UI channel
+   specified for a player to perceive their partner's situation, despite
+   Key Dynamics and the MVP hypothesis assuming real-time coordination) →
+   added a design note in Key Dynamics, a new Open Question, and expanded
+   the touch-UX spike's scope to include this question.
+5. **Session-length contradiction** (Core Identity said 30-120 min, Target
+   Player Profile said 15-60 min — flagged non-blocking in round 2, never
+   fixed, escalated to blocking in round 3 because it directly parametrizes
+   onboarding-curve pacing) → reconciled to 15-60 min typical / up to 120 if
+   the pair extends, in both Core Identity and the Session-Level Core Loop
+   header.
+6. **Automation entity-scale/compound-load performance spike was not a
+   gating checklist item** (buried in Content Volume prose while the
+   networking and touch-UX spikes were explicit blocking checkboxes) →
+   promoted to a third explicit `- [ ]` gating item in Next Steps, correctly
+   sequenced *before* `/map-systems` (not just before `/create-architecture`,
+   since it determines grid size). Also named mobile OS backgrounding/
+   screen-lock on the host device as the dominant real-world "host loss"
+   trigger (more common than AP isolation or true disconnection), and noted
+   the `<10s` reconnect criterion needs a concrete detection trigger to be
+   QA-verifiable.
+
+**Closing policy applied** (per creative-director, to stop the
+"philosophically-correct-but-operationally-incomplete" pattern from
+recurring): Pillar 5's softlock safeguard and the MVP's exotic-resource
+differentiation rule now each state the *shape* the eventual `/design-system`
+formula must take (expected-value-relative-to-output for the safeguard; a
+$/time band relative to normal for exotic pricing) rather than just a
+qualitative direction — the exact numbers still defer to `/design-system`,
+but the shape is now pinned so `/design-system` can't produce a
+degenerate-at-the-boundaries result.
 
 ## Key Decisions Carried Forward
 - Prototype validated: shared, unattributed economy (Pillar 1) + threat
   prevent-vs-repair trade-off (Pillar 5) genuinely generates co-op
-  negotiation — this layer is NOT in question, don't re-litigate it. (Note:
-  round 2 review found the softlock safeguard could have undermined this
-  same trade-off at the margin — now constrained, see item 3 above.)
+  negotiation — this layer is NOT in question, don't re-litigate it.
+- The concept itself is sound per creative-director across all 3 rounds — no
+  pillar is wrong, no core system is misconceived. All blocking items so far
+  have been localized edits, not re-decisions of what the game is.
 - Still genuinely open/untested: real local-wifi networking between 2 mobile
-  devices (peer discovery, iOS/Android permissions, host-loss behavior), and
-  the single contextual-action touch pattern on an actual touchscreen (target
-  size, self-occlusion, tap-vs-drag). Both now have dedicated checklist
-  entries gating `/create-architecture`.
-- Automation simulation entity scale (belts/workers count ceiling) is still
-  unbounded — flagged in Content Volume as pending a performance spike
-  before `/map-systems` fixes grid dimensions. Not yet scheduled as its own
-  checklist item (softer risk than the two gating spikes).
+  devices (peer discovery, iOS/Android permissions, host-loss/backgrounding
+  behavior), the single contextual-action touch pattern on an actual
+  touchscreen (target size, self-occlusion, tap-vs-drag, camera pan/zoom
+  collision, partner-awareness UI), and automation entity-scale/compound
+  host performance. All three now have dedicated, correctly-sequenced
+  gating checklist entries in Next Steps.
+- Free-rider risk (steady-state, non-threat-window free-riding) and MVP sink
+  runway (only one purchasable sink) are now explicitly documented as open
+  risks rather than silently unresolved — needs a decision at `/map-systems`
+  or the economy `/design-system` pass: accept the risk consciously, or add
+  a lightweight mitigation.
 
 ## Files Modified This Session
-- `design/gdd/game-concept.md` — all revisions above (round 2)
+- `design/gdd/game-concept.md` — all round-3 revisions above
+- `production/session-state/active.md` — this file
 
 ## Current Phase
-Post-revision (round 2), pre-re-review. Next action: `/clear` then re-run
-`/design-review design/gdd/game-concept.md` for a clean-context verification
-pass. After that (assuming APPROVED or CONCERNS-only): `/map-systems` to
-decompose into systems, then the two gating technical spikes (networking,
-touch-UX), then `/design-system [system]` per system, then
+Post-revision (round 3), pre-re-review. Next action: `/clear` then re-run
+`/design-review design/gdd/game-concept.md` as a **narrow verification pass**
+(creative-director's explicit recommendation — confirm the 6 edits above say
+what they should, not another full 8-specialist adversarial round). After
+that (assuming APPROVED or advisory-only CONCERNS): `/map-systems` — but note
+the new entity-scale performance spike is now gated *before* `/map-systems`,
+so that spike should run first if followed literally in Next Steps order.
+Then the other two gating spikes (networking, touch-UX — now including
+partner-awareness scope), then `/design-system [system]` per system, then
 `/create-architecture`.

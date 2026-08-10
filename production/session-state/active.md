@@ -1,10 +1,60 @@
 # Session State
 
 ## Current Task
+`/design-review design/gdd/farm-economy-system.md` — round 2 (full mode, 8
+specialists + creative-director synthesis) completed. Verdict: NEEDS REVISION,
+5 blocking items, all revised in-place this session. Awaiting a clean-context
+re-review to confirm these hold (round 3 verification pass) — user explicitly
+chose "re-review in a new session" as the next step. Next action: `/clear`
+then `/design-review design/gdd/farm-economy-system.md` again.
+
+## Farm Economy System — Round 2 Design Review (2026-08-10)
+5 blockers found and resolved in this pass (see Apéndice C2 in the GDD for
+the full decision log):
+1. Cosechadora de radio + Fresa combined to collapse decision variety and
+   make Trigo/Maíz manual harvest optional (Pilar 2 / Player Fantasy) →
+   added a 3s "Descansando" state after harvesting Fresa (§3.1, §3.2, Edge
+   Case 5.9, AC 9c, Tuning Knobs) — does not reopen round-1's $/s balance.
+2. Infrastructure (Silo/Almacén/Refugio) had no visual-presence rule unlike
+   Machines (Pilar 4) → added "Presencia visual" column to §3.7; Refugio's
+   radius now anchors to a physical structure.
+3. Silo had no base capacity or overflow rule → base capacity $150;
+   overflow blocks manual + auto harvest without loss (§3.7, §4.4, Edge
+   Case 5.8, AC 2b).
+4. Hold+repeated-tap seed-cycling gesture is categorically impossible with
+   one finger → reworded the provisional note in §3.4 so the touch-UX
+   spike is asked to select a different mechanism, not tune parameters.
+5. No baseline network-authority assumption stated, though AC3/AC6/AC8
+   already silently assumed one → added non-binding placeholder in
+   Dependencies (host-authoritative, clients send intents); extended Edge
+   Case 5.7 to cover concurrent-purchase races too.
+
+Also added (non-blocking, honesty fix): Overview/Player Fantasy now
+explicitly scope the "decision every few minutes" promise to ~20-30 min of
+a session, since Silo tier 4+ stops being an interesting decision (see
+Apéndice A item 5).
+
+Recommended (non-blocking) items surfaced but NOT yet addressed — left as
+open risk per Apéndice C2: Silo tier-4+ multiplier has no upper bound;
+Sembradora dominated on ROI by 4th plot (accepted as design texture);
+free-riding risk worsened by new spend categories (documented only);
+Cosechadora's "radio de 1 tile" distance metric undefined; 1.5s auto-harvest
+delay origin ambiguous; Fresa solo-mode viability; no accessibility option
+for reaction-time content; the entity-scale performance spike in
+game-concept.md is scoped to conveyor/worker automation, not to this GDD's
+actual content (flagged as a real gap, not yet fixed); GPUParticles2D
+support on Compatibility/Mobile renderer unverified; menu grouping once
+everything unlocks; AC6 not QA-testable without a debug overlay; AC1
+missing the "verify against current config" hedge AC3 has; missing ACs for
+Silo channeling per-tier, Almacén instant-plant, and Decoración/Confort
+visibility gating.
+
+## Prior Task (resolved, context only)
 `/design-review design/gdd/game-concept.md` — round 3 (clean-context re-review)
 completed: 8 specialists + creative-director synthesis. Verdict: NEEDS REVISION,
-6 blocking items, all revised in-place this session. Awaiting a clean-context
-re-review to confirm these hold (round 4 verification pass).
+6 blocking items, all revised in-place. A round-4 verification re-review of
+game-concept.md is still outstanding from before this farm-economy-system
+review session started — see below, unchanged.
 
 ## Progress Checklist
 - [x] Game concept written (`design/gdd/game-concept.md`)

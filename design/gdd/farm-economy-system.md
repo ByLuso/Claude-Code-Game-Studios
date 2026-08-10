@@ -1,7 +1,7 @@
 # System GDD: Farm Economy — Cultivos, Terreno, Máquinas e Infraestructura
 
 *Created: 2026-08-10*
-*Status: Draft — revisado tras `/design-review` (2026-08-10, veredicto MAJOR REVISION NEEDED, 8 especialistas + síntesis de creative-director). Bloqueantes resueltos en esta revisión; ver Apéndice C para el registro de decisiones. Tier: contenido MVP-adyacente / Vertical Slice — NO es contenido de MVP (ver Scope Tiers de `game-concept.md`).*
+*Status: Draft — revisado tras dos rondas de `/design-review` (2026-08-10). Ronda 1: veredicto MAJOR REVISION NEEDED, 8 especialistas + síntesis de creative-director, bloqueantes resueltos. Ronda 2 (mismo día, re-revisión): veredicto NEEDS REVISION, 5 bloqueantes adicionales resueltos en esta pasada. Ver Apéndice C para el registro completo de decisiones de ambas rondas. Tier: contenido MVP-adyacente / Vertical Slice — NO es contenido de MVP (ver Scope Tiers de `game-concept.md`).*
 *Origen: Sesión de diseño con ENGRANAJE (arquitecto de mecánicas), a partir de la hipótesis confirmada
 en `prototypes/rincon-compartido-concept/REPORT.md` (Concept Prototype Report — Economía Compartida + Amenazas)*
 *Propósito: especificación de sistemas lista para pasar a un agente de código que va a ampliar el
@@ -53,6 +53,15 @@ progresión de desbloqueo por hitos (sección 3.10). **No se afirma que este doc
 completo esa sensación de aburrimiento** — eso se confirma o descarta en el playtest de Vertical
 Slice (Apéndice B).
 
+**Aclarado en la ronda 2 de `/design-review` (2026-08-10)**: la promesa de "una decisión nueva cada
+pocos minutos" se sostiene con el contenido de este documento durante aproximadamente los primeros
+20-30 minutos de una sesión (hasta agotar terreno, Máquinas, e Infraestructura tiers 1-3); más allá
+de ese punto, el Silo tier 4+ (ver 3.7/4.5) deja de ser una decisión interesante en sí misma, y la
+profundidad de opciones reales pasa a depender del futuro sistema de cintas/trabajadores de
+`game-concept.md`. No es una falla de este documento — es el límite honesto de lo que su alcance
+puede resolver. Confirmar en el playtest de Vertical Slice (Apéndice B) si esa ventana de 20-30
+minutos alcanza para la duración típica de sesión (15-60 min) antes de que el aburrimiento reaparezca.
+
 ## 3. Detailed Rules
 
 ### 3.1 La parcela de cultivo
@@ -71,6 +80,7 @@ confundan entre sí incluso a distancia.
 | Pre-alerta de plaga | Parpadeo rojo tenue ×2 (0.25s cada uno) | 0.5s antes de que se dispare la plaga |
 | Marchita | Dibujo craquelado gris-marrón | Tras impacto de plaga sin prevenir |
 | Dañada (si hay Refugio comprado) | Marchito recuperable, menos severo que Marchita | Tras impacto de plaga estando dentro del radio de Refugio |
+| Descansando (solo Fresa, añadido en ronda 2) | Tierra removida sin brote, sin parpadeo | 3s tras cosechar una parcela de Fresa; no se puede replantar durante este estado (ver 3.2, Edge Case 5.9) |
 
 **Aclarado en `/design-review` 2026-08-10 (mecanismo de render, antes sin especificar)**: "Creciendo"
 sigue siendo un estado discreto a nivel de datos (una sola variable de estado), pero su
@@ -86,17 +96,29 @@ potencialmente animando a la vez (ver `.claude/docs/technical-preferences.md`).
 
 ### 3.2 Tabla de cultivos
 
-| Cultivo | Coste semilla | Duración Creciendo | Unidades al cosechar | Precio venta/unidad | Desbloqueo |
-|---|---|---|---|---|---|
-| Trigo | $2 | 6s | 3 | $5 | Disponible desde el inicio |
-| Maíz | $5 | 12s | 5 | $8 | Tras vender 100 unidades acumuladas de trigo |
-| Fresa | $8 | 4s | 2 | $12 | Tras comprar la 4ª parcela |
+| Cultivo | Coste semilla | Duración Creciendo | Unidades al cosechar | Precio venta/unidad | Descanso post-cosecha | Desbloqueo |
+|---|---|---|---|---|---|---|
+| Trigo | $2 | 6s | 3 | $5 | — | Disponible desde el inicio |
+| Maíz | $5 | 12s | 5 | $8 | — | Tras vender 100 unidades acumuladas de trigo |
+| Fresa | $8 | 4s | 2 | $12 | 3s (ver Edge Case 5.9) | Tras comprar la 4ª parcela |
 
 **Decisión de balance (resuelta en `/design-review` del 2026-08-10, ver Edge Cases 5.6)**: la Fresa
 mantiene su precio de semilla y su $/s más alto que el resto — no se busca igualar su tasa de
 beneficio a la del Maíz. En su lugar, es la opción de **mayor riesgo/mayor recompensa** del set,
 diferenciada por fragilidad, no por precio: su ventana de reacción a plaga se reduce a 4s (regla
 3.5) y queda excluida de la Cosechadora de radio (regla 3.6) — solo se puede cosechar a mano.
+
+**Añadido en la ronda 2 de `/design-review` (2026-08-10, ver Edge Case 5.9)**: la Fresa introduce
+además un estado "Descansando" de 3s tras cada cosecha, exclusivo de este cultivo, durante el cual
+esa parcela no puede replantarse. Esto no cambia su $/s nominal (la fórmula 4.1 sigue usando solo
+`duración_creciendo`), pero sí su ciclo real jugable: 4s de crecimiento + 3s de descanso = 7s de
+ciclo efectivo. El objetivo es puramente de atención, no de balance económico: sin este descanso,
+un jugador optimizador puede plantarse en una sola parcela de Fresa indefinidamente mientras la
+Cosechadora de radio (3.6) atiende Trigo/Maíz en automático, eliminando la variedad de decisiones
+que promete el Player Fantasy (ver nota de alcance en la Sección 2). Con el descanso, el ciclo
+efectivo de Fresa ($16 / 7s ≈ $2.29/s) queda mucho más cerca del de Trigo ($2.17/s) y Maíz
+($2.92/s), sin tocar el precio de semilla ni la ventana de reacción a plaga ya resueltos en la
+ronda 1.
 
 ### 3.3 Terreno y expansión
 
@@ -111,12 +133,18 @@ interactúa:
 - **Sobre parcela Vacía, mantener 0.4s** (no toque simple, para evitar plantar por accidente al
   pasar corriendo): cicla el tipo de semilla disponible con toques repetidos antes de soltar;
   soltar planta el tipo mostrado en ese momento. Solo aparecen en el ciclo los cultivos ya
-  desbloqueados. **⚠ Provisional (round de `/design-review` 2026-08-10)**: 0.4s cae en la zona de
-  disparo accidental típica de gestos "hold" en táctil, y "toques repetidos mientras se mantiene
-  presionado" no es necesariamente un gesto implementable tal cual en un solo dedo — este gesto
-  completo (duración, y si el ciclo es por re-toque o por otro mecanismo como arrastre lateral)
-  queda sujeto a lo que confirme el spike de UX táctil ya bloqueante en `game-concept.md` (ver
-  Dependencies). No se rediseña aquí a propósito, para no adelantarse al resultado del spike.
+  desbloqueados. **⚠ Provisional (ronda 1 de `/design-review` 2026-08-10, alcance corregido en
+  ronda 2)**: 0.4s cae en la zona de disparo accidental típica de gestos "hold" en táctil.
+  **Corrección de ronda 2**: "toques repetidos mientras se mantiene presionado" no es solo
+  riesgoso — es incoherente con un solo dedo. Un toque es en sí mismo un evento de soltar
+  (down+up); tocar repetidamente con el mismo dedo que sostiene la pulsación necesariamente suelta
+  esa pulsación en cada toque, así que no existe una secuencia de un solo dedo que satisfaga
+  "mantener presionado" y "tocar repetidamente" a la vez. El spike de UX táctil ya bloqueante en
+  `game-concept.md` (ver Dependencies) no debe leer esto como "confirmar duración y conteo de
+  toques" — debe leerse como "seleccionar un mecanismo de ciclado distinto" (p. ej. arrastre
+  lateral mientras se sostiene, o ciclar con toques sueltos antes de un hold final de
+  confirmación). No se rediseña aquí a propósito, para no adelantarse al resultado del spike — pero
+  el marco de la pregunta que el spike debe responder queda corregido.
 - **Sobre parcela Lista, toque simple:** cosecha, añade las unidades correspondientes al silo
   compartido.
 - **Sobre parcela en alerta de plaga, toque simple:** previene, –$15 del dinero compartido.
@@ -182,14 +210,35 @@ nunca cosecha Fresa (es manual-only, ver 3.2) y su auto-cosecha en Trigo/Maíz t
 dos ventajas concretas de lo manual: acceso al cultivo de mayor $/s, y velocidad de ciclo en
 cualquier cultivo.
 
+**Añadido en la ronda 2 de `/design-review` 2026-08-10**: si el silo está lleno (ver 3.7, Edge Case
+5.8), la auto-cosecha de la Cosechadora no se dispara — la parcela permanece en Lista hasta que haya
+espacio disponible en el silo, sin perder la cosecha ni consumir el retraso de 1.5s en vano.
+
 ### 3.7 Infraestructura (eficiencia, no cosmética — compra en Taller o estructura dedicada)
 
-| Estructura | Coste | Límite | Efecto | Desbloqueo |
-|---|---|---|---|---|
-| Silo ampliado (tiers 1-3) | $80 → $200 → $400 ($680 acumulado) | 3× | Cada compra suma +$200 de capacidad; la canalización de venta baja según fórmula 4.4 (2s → 1s) | Tras acumular $500 en ventas totales |
-| Silo ampliado (tiers 4+) | Cada tier adicional cuesta el doble del anterior ($800, $1.600, ...) | Sin límite | Cada compra suma +$200 de capacidad adicional; **no reduce más la canalización** (se queda en 1s, piso fijado en tier 3) | Tras completar el tier 3 |
-| Almacén de semillas | $120 | 1× | Desbloquea 5 slots de semilla precargada — plantar pasa de mantener 0.4s a toque simple 0.1s si el slot ya tiene semilla | Tras plantar 50 unidades totales |
-| Abrigo/Refugio | $150 | 1× | Estar dentro de la zona (1 tile) cuando llega una plaga reduce el daño: la parcela pasa a "Dañada" (recuperable por $5) en vez de "Marchita" (rota, $10) | Tras sufrir 3 plagas |
+| Estructura | Coste | Límite | Efecto | Presencia visual | Desbloqueo |
+|---|---|---|---|---|---|
+| Silo ampliado (tiers 1-3) | $80 → $200 → $400 ($680 acumulado) | 3× | Cada compra suma +$200 de capacidad; la canalización de venta baja según fórmula 4.4 (2s → 1s) | Estructura de silo física junto al Taller; cada tier comprado añade un segmento/anillo visible a la misma estructura (no una estructura nueva por tier), creciendo en altura | Tras acumular $500 en ventas totales |
+| Silo ampliado (tiers 4+) | Cada tier adicional cuesta el doble del anterior ($800, $1.600, ...) | Sin límite | Cada compra suma +$200 de capacidad adicional; **no reduce más la canalización** (se queda en 1s, piso fijado en tier 3) | Mismo silo, sigue añadiendo un segmento visible por tier — sin límite de segmentos, aunque el efecto mecánico se estanca (ver 4.5) | Tras completar el tier 3 |
+| Almacén de semillas | $120 | 1× | Desbloquea 5 slots de semilla precargada — plantar pasa de mantener 0.4s a toque simple 0.1s si el slot ya tiene semilla | Estructura pequeña tipo cobertizo/estante junto al Taller, distinta de las Máquinas y del Silo, visible desde que se compra | Tras plantar 50 unidades totales |
+| Abrigo/Refugio | $150 | 1× | Estar dentro de la zona (1 tile) cuando llega una plaga reduce el daño: la parcela pasa a "Dañada" (recuperable por $5) en vez de "Marchita" (rota, $10) | Estructura de techo/refugio visible, colocada en un punto fijo del terreno — su radio de 1 tile (ver Efecto) se ancla siempre a esta estructura, nunca a una posición abstracta; un decal en el suelo marca el borde del radio | Tras sufrir 3 plagas |
+
+**Resuelto en la ronda 2 de `/design-review` 2026-08-10 (Pilar 4 — Crecimiento visible)**: la
+Infraestructura tenía la misma omisión que las Máquinas tuvieron en la ronda 1 — sin presencia
+física obligatoria. Cada estructura de esta tabla ahora tiene una regla de presencia visual
+explícita (columna nueva), incluyendo el Refugio, cuyo radio de efecto ahora se ancla a una
+estructura física concreta en vez de a una zona abstracta sin ubicación definida — esto también
+resuelve la ambigüedad de dónde está "la zona" del Refugio, que ninguna ronda anterior había fijado.
+
+**Añadido en la ronda 2 de `/design-review` 2026-08-10 (capacidad base y desbordamiento del Silo,
+antes sin definir)**: antes de comprar cualquier tier de Silo, la capacidad base del silo compartido
+es **$150** de valor de venta acumulado sin vender (no unidades físicas — ver fórmula 4.4). Si el
+silo está lleno (el valor de las unidades almacenadas sin vender iguala su capacidad actual) y una
+parcela pasa a Lista o ya lo está, cosecharla a mano no funciona: produce el feedback de "silo
+lleno" (icono de silo con un parpadeo rojo breve), no descuenta ni pierde nada, y la parcela
+permanece en estado Lista indefinidamente hasta que haya espacio. No hay pérdida de cosecha ni
+penalización — el costo es puramente de oportunidad (la parcela sigue "Lista" en vez de reiniciar su
+ciclo), preservando el Pilar 2 en vez de castigar lo manual. Ver Edge Case 5.8 y AC 2b.
 
 **Resuelto en `/design-review` 2026-08-10 (profundidad de sinks)**: el Silo ampliado ya no tiene un
 techo duro de 3 compras — a partir del tier 4, cada compra sigue sumando capacidad (aunque ya no
@@ -296,6 +345,9 @@ cultivo plantado.
 
 ### 4.4 Silo ampliado — capacidad y canalización de venta
 
+- **Capacidad base (añadido en ronda 2, antes sin definir)**: $150 de valor de venta acumulado sin
+  vender, antes de comprar cualquier tier de Silo. Ver Edge Case 5.8 para el comportamiento de
+  desbordamiento.
 - Capacidad extra acumulada por tier: $200 por compra. Tiers 1-3 cuestan $80/$200/$400 ($680
   acumulado); desde el tier 4 (ver 3.7), cada compra cuesta el doble de la anterior ($800, $1.600...).
 - **Canalización de venta (aclarado en `/design-review` 2026-08-10 — antes un lookup de 2 puntos
@@ -373,6 +425,31 @@ largo plazo para la profundidad de sink definitiva.
    este documento no debe tratarse como implementation-ready para la interacción compartida de
    parcelas.
 
+   **Ampliado en la ronda 2 de `/design-review` 2026-08-10**: la misma clase de riesgo aplica a
+   cualquier compra de un solo uso o con límite desde el pozo compartido — expansión de terreno
+   (3.4), Máquinas (3.6, compra única), tiers de Silo (3.7), y los límites de Decoración/Confort
+   (3.8/3.9, AC10). Si ambos jugadores intentan comprar el mismo ítem limitado en el mismo instante
+   (p. ej. el último tier disponible de una Máquina, o la última unidad de Valla), existe el mismo
+   riesgo de doble gasto o doble asignación por encima del límite que en la colisión de parcela ya
+   documentada arriba. **Sin resolver a propósito, por la misma razón**: depende del modelo de
+   autoridad que fije el spike técnico de red (ver el supuesto base no vinculante añadido en
+   Dependencies). Hasta entonces, ninguna compra limitada de este documento debe tratarse como segura
+   contra condiciones de carrera entre los dos dispositivos.
+
+5.8. **(Añadido en la ronda 2 de `/design-review` 2026-08-10) Silo lleno al intentar cosechar**: si
+   el valor de venta de las unidades almacenadas sin vender iguala la capacidad actual del silo
+   (base $150, ver Formulas 4.4), tocar una parcela Lista no cosecha — produce el feedback de "silo
+   lleno" (icono de silo con un parpadeo rojo breve), no descuenta ni pierde nada, y la parcela
+   permanece en estado Lista indefinidamente. La auto-cosecha de la Cosechadora de radio (3.6)
+   tampoco se dispara mientras el silo esté lleno, y se retoma automáticamente en cuanto haya
+   espacio, sin perder la parcela objetivo de su estado Lista. Ver AC 2b.
+
+5.9. **(Añadido en la ronda 2 de `/design-review` 2026-08-10) Descanso de Fresa tras cosecha**: tras
+   cosechar una parcela de Fresa (a mano — nunca aplica a Trigo/Maíz), esa parcela entra en estado
+   Descansando durante exactamente 3.0s, durante el cual intentar plantar produce el mismo feedback
+   de "no todavía" que sobre una parcela en Creciendo, sin penalización económica. Ver 3.1, 3.2 y
+   AC 9c para el propósito de mitigación de monopolio de atención de esta regla.
+
 ## 6. Dependencies
 
 - **Extiende** `design/gdd/game-concept.md`: reutiliza el core loop validado por el concept
@@ -406,6 +483,15 @@ largo plazo para la profundidad de sink definitiva.
   infraestructura, contadores de hitos) sin definir autoridad de red, replicación, ni resolución de
   colisiones (ver Edge Case 5.7). Las reglas marcadas "⚠ Provisional" en este documento (3.4, 3.5)
   quedan sujetas a lo que ese spike determine.
+  - **Añadido en la ronda 2 de `/design-review` 2026-08-10 (supuesto base no vinculante)**: mientras
+    el spike de red no determine el modelo de autoridad definitivo, este documento asume como
+    placeholder no vinculante que **el host es dueño de todo el estado mutable compartido** descrito
+    aquí (dinero, temporizadores de crecimiento y de plaga, propiedad de máquinas, tiers de
+    infraestructura, contadores de hitos, capacidad y contenido del silo) y que **los clientes solo
+    envían intenciones, nunca calculan ni confirman ese estado localmente**. Este supuesto no
+    resuelve las reglas "⚠ Provisional" (3.4, 3.5) ni la colisión de Edge Case 5.7 — solo evita que
+    otras partes del documento (AC 6, AC 8, AC 3) contradigan en silencio la deferencia declarada
+    aquí mismo. Queda sujeto a reemplazo total por lo que determine el spike.
 - **Depende del spike de UX táctil / aviso entre compañeros** (`game-concept.md` Next Steps,
   **bloqueante antes de `/create-architecture`**): el gesto de mantener 0.4s (3.4) y el mecanismo
   para que un jugador vea el estado de su compañero (canal de venta, compras en curso) quedan
@@ -434,6 +520,8 @@ largo plazo para la profundidad de sink definitiva.
 | Umbral desbloqueo Confort | 5 minutos de partida | 3–8 min | Cuándo se ofrecen mejoras de comodidad no esenciales |
 | Canalización de venta | fórmula 4.4: 2.0s a 1.0s según tiers de Silo | 1–3s en los extremos | Ventana de vulnerabilidad al vender (mitigada por cancelación, regla 3.4) |
 | Límites de decoración | Valla 6× / Bandera 3× / Cartel 1× | mantener límites bajos | Evita clutter visual en el mapa |
+| Descanso post-cosecha de Fresa (nuevo, ronda 2) | 3s | 2–5s | Ciclo efectivo de la Fresa y mitigación de monopolio de atención (ver 3.2, Edge Case 5.9) |
+| Capacidad base del Silo (nuevo, ronda 2) | $150 | $100–$250 | Cuán pronto se siente el desbordamiento antes de la primera compra de Silo (ver 4.4, Edge Case 5.8) |
 
 ## 8. Acceptance Criteria
 
@@ -443,6 +531,11 @@ largo plazo para la profundidad de sink definitiva.
    UX táctil.)**
 2. Dado un cultivo en estado Lista, un toque simple lo cosecha y añade al silo compartido
    exactamente las unidades definidas en la tabla 3.2 para ese cultivo.
+2b. **(añadido en la ronda 2 de `/design-review` 2026-08-10 — antes sin AC)** Dado un silo cuyo
+   valor almacenado sin vender iguala su capacidad actual, un toque simple sobre una parcela Lista
+   no cosecha, no descuenta ni suma dinero, y produce el feedback visual de "silo lleno"; la parcela
+   permanece en estado Lista. La auto-cosecha de la Cosechadora de radio (regla 9) tampoco se
+   dispara mientras el silo esté lleno, y se retoma automáticamente en cuanto haya espacio.
 3. Dada una parcela de Trigo o Maíz en pre-alerta de plaga, tras 0.5s se activa el enjambre visual
    y el jugador dispone exactamente de 6.0s (medidos en tiempo del host, ver Dependencies) desde
    ese momento para prevenir (–$15) antes de que la parcela pase a Marchita. Para Fresa, la ventana
@@ -479,6 +572,10 @@ largo plazo para la profundidad de sink definitiva.
 9b. **(añadido en `/design-review` 2026-08-10 — antes sin AC)** Tras comprar la Sembradora rápida,
    mantener el botón de acción sobre una parcela Vacía planta el cultivo mostrado tras 0.15s de
    sostenido, en vez de los 0.4s por defecto.
+9c. **(añadido en la ronda 2 de `/design-review` 2026-08-10 — antes sin AC)** Tras cosechar una
+   parcela de Fresa a mano, esa parcela entra en estado Descansando durante exactamente 3.0s,
+   durante el cual intentar plantar produce el mismo feedback de "no todavía" que sobre una parcela
+   en Creciendo, sin penalización económica.
 10. **(añadido en `/design-review` 2026-08-10 — antes sin AC)** Cada ítem de Decoración (Valla,
    Bandera, Cartel) y Confort (Timbre, Mostrador) puede comprarse hasta su límite definido en las
    tablas 3.8/3.9; al alcanzar el límite, la opción de compra se deshabilita visualmente (no solo
@@ -490,25 +587,46 @@ X" porque ya no es el objetivo de diseño.)*
 
 ---
 
-## Apéndice A — Riesgos de balance abiertos (resumen, actualizado tras `/design-review` 2026-08-10)
+## Apéndice A — Riesgos de balance abiertos (resumen, actualizado tras `/design-review` 2026-08-10, ronda 2)
 
 Ver detalle completo en Edge Cases (sección 5) y Formulas (sección 4). Resumen de seguimiento:
 
 1. ~~Fresa desequilibrada frente a Maíz/Trigo en $/s~~ — **resuelto**: diferenciación por riesgo
-   (Edge Case 5.6), no paridad. Pendiente solo de confirmar en playtest que 4s de ventana se siente
-   bien en táctil real.
+   (Edge Case 5.6), no paridad. **Ronda 2**: se identificó que la paridad de $/s no bastaba —
+   permitía monopolizar la atención en una sola parcela de Fresa mientras la Cosechadora atendía
+   Trigo/Maíz sola (ver ítem 7). Mitigado con el descanso post-cosecha de 3s (Edge Case 5.9).
+   Pendiente de confirmar en playtest que 4s de ventana y 3s de descanso se sienten bien en táctil
+   real.
 2. Solapamiento de plagas con 5-6 parcelas activas — mitigado por diseño (cooldown 15s), con
    comportamiento por defecto explícito si el playtest lo rechaza (Edge Case 5.3).
 3. Parálisis de menú con 10+ opciones — mitigado por desbloqueo por hitos + aviso visible (Edge
-   Case 5.5, regla 3.10).
+   Case 5.5, regla 3.10). Riesgo residual identificado en ronda 2: una vez todo desbloqueado, la
+   lista plana de opciones no tiene agrupación/pestañas — aceptado como riesgo menor no bloqueante,
+   ver Apéndice C ronda 2.
 4. ~~Vulnerabilidad durante la canalización de venta~~ — **mitigada**: canal cancelable (Edge Case
    5.4). Pendiente de confirmar en playtest si además hace falta que el compañero la vea (depende
    del spike de UX táctil).
-5. **(nuevo)** Runway total de gasto poco profundo (~$2.539 en contenido de un solo tier) —
-   parcialmente extendido con tiers de Silo sin techo (Formulas 4.5), pero la profundidad completa
-   sigue dependiendo del futuro sistema de cintas/trabajadores (fuera de alcance de este documento).
-6. **(nuevo)** Colisión de acciones simultáneas sobre la misma parcela entre los dos jugadores —
-   sin resolver a propósito, depende del spike técnico de red (Edge Case 5.7).
+5. Runway total de gasto poco profundo (~$2.539 en contenido de un solo tier) — parcialmente
+   extendido con tiers de Silo sin techo (Formulas 4.5). **Ronda 2**: se reconoce explícitamente en
+   Overview/Player Fantasy que esta profundidad solo cubre ~20-30 minutos de sesión; más allá de
+   eso, el Silo tier 4+ es un sink sin decisión real. La profundidad completa sigue dependiendo del
+   futuro sistema de cintas/trabajadores (fuera de alcance de este documento) — no se inventó
+   contenido nuevo para tapar el hueco, a propósito.
+6. Colisión de acciones simultáneas sobre la misma parcela entre los dos jugadores — sin resolver a
+   propósito, depende del spike técnico de red (Edge Case 5.7). **Ronda 2**: se identificó que el
+   mismo riesgo aplica a cualquier compra limitada desde el pozo compartido (terreno, máquinas,
+   tiers de Silo, decoración/confort) — ampliado en Edge Case 5.7, igualmente sin resolver a
+   propósito.
+7. **(nuevo, ronda 2)** Cosechadora de radio + Fresa combinadas volvían "manual siempre vale la
+   pena" y "decisión cada pocos minutos" simultáneamente falsos — el jugador óptimo dejaba que la
+   máquina cultivara Trigo/Maíz y se plantaba en una sola parcela de Fresa el resto de la sesión.
+   Mitigado con el descanso post-cosecha de Fresa (Edge Case 5.9, Tuning Knobs) sin reabrir el
+   balance de $/s ya resuelto en la ronda 1.
+8. **(nuevo, ronda 2)** Silo sin capacidad base ni regla de desbordamiento — resuelto: capacidad
+   base $150, desbordamiento bloquea la cosecha manual y automática sin pérdida (Edge Case 5.8).
+9. **(nuevo, ronda 2)** Infraestructura (Silo, Almacén, Refugio) sin presencia visual obligatoria,
+   a diferencia de las Máquinas — resuelto, columna "Presencia visual" añadida a la tabla 3.7,
+   incluyendo el anclaje físico del radio del Refugio.
 
 ## Apéndice B — Orden de implementación sugerido
 
@@ -558,3 +676,30 @@ desbloqueo de menú (3.10), ACs faltantes para Sembradora/decoración/confort/ru
 8.9b, 8.10), ambigüedad de "unidades plantadas" (Tuning Knobs), piso de `duración_creciendo`
 (Tuning Knobs). No se tocaron por estar fuera de alcance de esta pasada (quedan como riesgo menor
 aceptado): los ratios decrecientes del coste de expansión de terreno (4.2).
+
+## Apéndice C2 — Registro de decisiones de la ronda 2 de `/design-review` (2026-08-10, NEEDS REVISION → revisado en esta sesión)
+
+Especialistas consultados: game-designer, systems-designer, economy-designer, ux-designer,
+godot-specialist, network-programmer, performance-analyst, qa-lead, creative-director (síntesis).
+
+| # | Bloqueante | Decisión aplicada |
+|---|---|---|
+| 1 | Cosechadora de radio + Fresa combinadas colapsaban la variedad de decisiones y volvían Trigo/Maíz manual opcional (Pilar 2 y Player Fantasy) | Descanso post-cosecha de Fresa de 3s, exclusivo de ese cultivo (3.1, 3.2, Edge Case 5.9, AC 9c, Tuning Knobs) — no reabre el balance de $/s de la ronda 1 |
+| 2 | Infraestructura (Silo, Almacén, Refugio) sin presencia visual obligatoria, a diferencia de las Máquinas (Pilar 4) | Columna "Presencia visual" añadida a la tabla 3.7; radio del Refugio anclado a una estructura física (3.7) |
+| 3 | Silo sin capacidad base ni regla de desbordamiento (riesgo de castigar la cosecha manual, Pilar 2) | Capacidad base $150; desbordamiento bloquea cosecha manual y automática sin pérdida (3.7, 4.4, Edge Case 5.8, AC 2b) |
+| 4 | Gesto de mantener+tocar repetido es incoherente con un solo dedo, no solo riesgoso | Nota provisional reformulada: el spike debe seleccionar un mecanismo distinto, no ajustar parámetros del actual (3.4) |
+| 5 | Ningún supuesto base de autoridad de red declarado, pese a que AC3/AC6/AC8 ya lo asumían en silencio | Supuesto no vinculante añadido en Dependencies (host autoritativo, clientes solo envían intenciones); Edge Case 5.7 ampliado a compras concurrentes limitadas |
+
+Ítems "recomendados" (no bloqueantes) documentados pero no resueltos en esta pasada — quedan como
+riesgo abierto o para una pasada futura: techo práctico del multiplicador de Silo tier 4+ (Tuning
+Knobs, solo tiene piso ≥1.8, sin techo); viabilidad de la Sembradora rápida frente a la 4ª parcela en
+ROI (aceptado como textura de diseño, no reprecio); riesgo de free-riding agravado por las nuevas
+categorías de gasto compartido (documentado, no mitigado); métrica de distancia de "radio de 1 tile"
+de la Cosechadora (Chebyshev/Manhattan/Euclidiana sin definir) y origen exacto del temporizador de
+1.5s; viabilidad de Fresa en modo solo; opción de accesibilidad para contenido dependiente de tiempo
+de reacción; alcance del spike de rendimiento (delimitado en `game-concept.md` para cintas/
+trabajadores, no para el contenido específico de este documento); soporte de `GPUParticles2D` en el
+renderer Compatibility/Mobile; agrupación/pestañas de menú una vez todo desbloqueado; AC6 no
+verificable sin overlay de depuración; AC1 sin el mismo matiz de "valor vigente" que AC3; ACs
+faltantes para la canalización del Silo por tier, el Almacén de semillas, y la visibilidad de
+Decoración/Confort.

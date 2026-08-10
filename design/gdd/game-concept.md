@@ -48,13 +48,15 @@ La interdependencia económica real entre los dos jugadores (una sola cuenta, un
 
 ### Target Aesthetics (What the player FEELS)
 
+*Priority: 1 = máxima prioridad, 7 = mínima.*
+
 | Aesthetic | Priority | How We Deliver It |
 | ---- | ---- | ---- |
 | **Sensation** (sensory pleasure) | 5 | Feedback rápido e inmediato al cosechar (partículas, sonido, contador subiendo) |
 | **Fantasy** (make-believe, role-playing) | 7 | Mínima — "somos dueños de un negocio que crece juntos" |
 | **Narrative** (drama, story arc) | N/A | Sin narrativa dirigida; el juego es sistémico, no narrativo |
-| **Challenge** (obstacle course, mastery) | 1 | Curva de automatización, eventos de amenaza que ponen a prueba el sistema, métricas de eficiencia visibles |
-| **Fellowship** (social connection) | 2 | Cuenta y terreno compartidos, decisiones de inversión conjuntas, roles flexibles |
+| **Challenge** (obstacle course, mastery) | 2 | Curva de automatización, eventos de amenaza que ponen a prueba el sistema, métricas de eficiencia visibles |
+| **Fellowship** (social connection) | 1 | Cuenta y terreno compartidos, decisiones de inversión conjuntas, roles flexibles |
 | **Discovery** (exploration, secrets) | 3 | Nuevos tipos de recursos y piezas de automatización desbloqueables |
 | **Expression** (self-expression, creativity) | 4 | Libertad de diseño en la disposición de cintas, parcelas y trabajadores |
 | **Submission** (relaxation, comfort zone) | 6 | Loop manual rítmico y relajante entre picos de tensión por amenazas |
@@ -153,6 +155,8 @@ Amenazas periódicas (plagas, derrumbes, incendios) ponen a prueba la operación
 
 **Salvaguarda contra softlock**: si el dinero compartido es insuficiente para prevenir o reparar, la amenaza se resuelve automáticamente al final de su ventana de tiempo, sin cobro — el costo es la pérdida temporal de producción, nunca un bloqueo permanente ni una deuda. Ningún diseño de amenaza debe poder dejar a los jugadores sin salida.
 
+Esta salvaguarda es un piso anti-softlock, no una vía económica viable: el tiempo de inactividad de la resolución automática debe ser, en valor esperado, siempre peor que el costo de prevenir o reparar. De lo contrario, "dejar que se resuelva sola" se vuelve la estrategia dominante y el trade-off de este pilar — validado como divertido en el prototipo — deja de importar. El valor exacto de esa penalización se define en `/design-system`, pero la relación (auto-resolución siempre peor que pagar) debe cumplirse siempre.
+
 **Techo de frecuencia**: la frecuencia/severidad de las amenazas debe crecer con la operación hasta un techo definido, no indefinidamente — de lo contrario el sistema nunca se siente "autosuficiente" (contradice la Core Fantasy), solo exige atención manual creciente para siempre. El valor exacto del techo se define en `/design-system`.
 
 *Design test*: Si dudamos entre resolver una amenaza con una mecánica de acción/combate o con una decisión de inversión/gestión, elegimos la gestión.
@@ -202,7 +206,7 @@ Amenazas periódicas (plagas, derrumbes, incendios) ponen a prueba la operación
 | **Art Pipeline Complexity** | Low-Medium (2D custom) |
 | **Audio Needs** | Moderate (feedback de cosecha, alertas de amenaza, música ambiental relajante) |
 | **Networking** | **Cliente/host vía ENet** (API de multiplayer de alto nivel de Godot) — **NO es P2P puro**, un dispositivo actúa como host. Godot no incluye descubrimiento de red local (sin mDNS/broadcast integrado) — hay que implementarlo. Riesgos de plataforma sin validar: iOS requiere permiso de Red Local + declarar servicio Bonjour; Android puede tener multicast-lock o aislamiento de AP en algunos routers. **No probado aún** — el prototipo usó hotseat en 1 dispositivo, no red real. Pendiente de spike técnico dedicado antes de comprometer arquitectura. |
-| **Content Volume** | MVP: 2 parcelas (1 inicial + 1 comprable), 3 tipos de recurso base con diferenciación normal/exótico, 1 amenaza por tipo con protección + reparación comprables, automatización básica. Visión completa: recursos "exóticos" adicionales, tech tree extenso |
+| **Content Volume** | MVP: 2 parcelas (1 inicial + 1 comprable), 3 tipos de recurso base con diferenciación normal/exótico, **1 amenaza recurrente en total** (aplica a la operación compartida, no una por cada tipo de recurso — ver MVP Definition) con protección + reparación comprables, automatización básica. Techo de entidades activas (cintas/trabajadores simultáneos) sin definir aún — pendiente de spike de rendimiento antes de que `/map-systems` fije el tamaño de la cuadrícula. Visión completa: recursos "exóticos" adicionales, tech tree extenso, variedad de amenazas (una por tipo de recurso) |
 | **Procedural Systems** | Ninguno confirmado — posible generación aleatoria de amenazas (tipo, timing), no de terreno |
 
 ---
@@ -216,7 +220,8 @@ Amenazas periódicas (plagas, derrumbes, incendios) ponen a prueba la operación
 ### Technical Risks
 - Sincronización de estado compartido (economía, inventario, posiciones) entre 2 dispositivos móviles vía wifi local en tiempo real, sobre una arquitectura cliente/host (ENet), no P2P puro.
 - Descubrimiento de red local sin librería integrada en Godot, más permisos de iOS (Red Local/Bonjour) y restricciones de Android (multicast lock/aislamiento de AP) — sin validar.
-- Rendimiento de la simulación de automatización (muchas cintas/trabajadores activos) en hardware móvil de gama media/baja.
+- Pérdida del dispositivo host (desconexión, o suspensión por el sistema operativo móvil al pasar a segundo plano) no tiene comportamiento definido — la arquitectura cliente/host implica que esto es una posible falla total de sesión, no solo un estado degradado. Ver Open Questions.
+- Rendimiento de la simulación de automatización (muchas cintas/trabajadores activos) en hardware móvil de gama media/baja, combinado con la carga de sincronización de red — el dispositivo host simula, serializa y renderiza dentro del mismo presupuesto de 16.6ms, un riesgo compuesto no evaluado aún.
 
 ### Market Risks
 - El género tycoon móvil está dominado por juegos F2P con monetización agresiva; posicionar este juego con otro modelo puede ser un reto de descubribilidad.
@@ -229,14 +234,15 @@ Amenazas periódicas (plagas, derrumbes, incendios) ponen a prueba la operación
 ### Open Questions
 - ¿Qué modelo de monetización tendrá el juego (pago único, F2P, aún sin decidir)? — Resolver **antes del `/design-system` de economía**, ya que afecta retroactivamente el diseño de sinks/faucets, no solo antes de `/create-architecture`.
 - ¿Es viable el descubrimiento de red local (peer discovery) entre 2 dispositivos móviles sin librerías de terceros complejas, dados los permisos de iOS (Red Local + Bonjour) y las restricciones de Android (multicast lock / aislamiento de AP)? — Godot no lo trae integrado. Resolver con un **spike técnico dedicado** antes de comprometer arquitectura de red — no alcanza con "durante /setup-engine", ya que el prototipo no llegó a probar red real.
-- ¿El patrón de botón de acción único y contextual (validado en teclado/escritorio en el prototipo) se sostiene en pantalla táctil real? — Validar con un `/prototype` o spike de UX táctil dedicado antes de que `/setup-engine`/`/create-architecture` fijen decisiones de input que sean costosas de cambiar después.
+- ¿El patrón de botón de acción único y contextual (validado en teclado/escritorio en el prototipo) se sostiene en pantalla táctil real? — Validar con un `/prototype` o spike de UX táctil dedicado antes de que `/create-architecture` fije decisiones de input que sean costosas de cambiar después. El spike debe responder específicamente: tamaño mínimo de objetivo táctil en la cuadrícula (riesgo de "dedo gordo"), auto-oclusión de la celda por el propio dedo al colocar, y si la colocación de cintas es de un toque o de arrastre (y si eso choca con la cosecha, que es de un toque).
+- ¿Qué pasa si el dispositivo host se desconecta, se suspende (pasa a segundo plano) o falla a mitad de sesión — migración de host, guardado periódico para poder reanudar, o la sesión simplemente termina con el último estado sincronizado guardado localmente? — Resolver como parte del spike técnico de red, antes de `/create-architecture`. La reconexión en <10s (ver MVP) solo aplica a caídas de red transitorias; si el fallo es estructural (p. ej. aislamiento de punto de acceso, host perdido), debe dar un mensaje de error claro con causa y acción concreta, no reintentar indefinidamente.
 - ¿Cómo funciona mecánicamente el "modo solo" (un jugador controla ambos roles, o se simplifica el loop)? — Resolver en `/map-systems` o un `/design-system` dedicado.
 
 ---
 
 ## MVP Definition
 
-**Core hypothesis**: Dos jugadores, cada uno en su propio dispositivo conectado por wifi local, encuentran satisfactorio cosechar manualmente y automatizar progresivamente una operación compartida de 3 recursos — **lo sabremos si, tras un evento de amenaza, ambos negocian activamente la respuesta (prevenir pagando más al instante, o reparar pagando menos pero aceptando tiempo de inactividad) en vez de que uno ignore al otro**, y si esa satisfacción se sostiene a lo largo de varias sesiones, no solo en la primera media hora.
+**Core hypothesis**: Dos jugadores, cada uno en su propio dispositivo conectado por wifi local, encuentran satisfactorio cosechar manualmente y automatizar progresivamente una operación compartida de 3 recursos — **lo sabremos si, tras un evento de amenaza, ambos jugadores realizan al menos una acción económica relacionada con la respuesta (comprar prevención, iniciar reparación, o gastar del fondo compartido para ese evento) dentro de la ventana de resolución, en vez de que solo uno actúe mientras el otro registra cero acciones económicas**, y si esa satisfacción se mide en al menos 3 sesiones separadas del mismo par de jugadores (en un lapso de 7 días), con al menos 2 de esas 3 mostrando la conducta de negociación activa arriba definida. La satisfacción se mide con (a) tasa de retorno del par sin ser recordado, y (b) una pregunta post-sesión (escala 1-5: "¿qué tan satisfactoria fue la coordinación durante la amenaza?") aplicada a ambos jugadores; "se sostiene" = promedio ≥4/5 en la primera y en la última sesión medida, sin caída mayor a 1 punto entre ambas.
 
 *Nota: esta hipótesis y su marcador observable ya fueron confirmados por un concept prototype — ver `prototypes/rincon-compartido-concept/REPORT.md`. El MVP real debe evitar reproducir la configuración de contenido mínimo que ese prototipo encontró aburrida tras unos ciclos.*
 
@@ -246,7 +252,7 @@ Amenazas periódicas (plagas, derrumbes, incendios) ponen a prueba la operación
 3. Cuenta bancaria compartida y venta de recursos
 4. 1 evento de amenaza recurrente, con **ambas** respuestas disponibles: prevenir (pago mayor, instantáneo) y reparar (pago menor, con tiempo de inactividad) — ver salvaguarda contra softlock en Pilar 5
 5. Compra de la segunda parcela como sink de inversión
-6. Conexión wifi local funcional entre 2 dispositivos reales (no hotseat), con reconexión en menos de 10 segundos tras una caída breve, o un mensaje de error claro si falla
+6. Conexión wifi local funcional entre 2 dispositivos reales (no hotseat): reconexión en menos de 10 segundos tras una caída de red transitoria; si la reconexión falla por una causa estructural (p. ej. aislamiento de punto de acceso, host perdido/en segundo plano), un mensaje de error claro que indique la causa detectada y ofrezca una acción concreta (reintentar / cancelar) — nunca un reintento indefinido. Ver Open Questions para el comportamiento ante pérdida del host.
 
 **Explicitly NOT in MVP** (defer to later):
 - Más de 2 parcelas / expansión de terreno adicional
@@ -273,7 +279,10 @@ Amenazas periódicas (plagas, derrumbes, incendios) ponen a prueba la operación
 - [x] Run `/prototype` — concept prototype de economía compartida + amenazas construido y jugado, veredicto PROCEED (ver `prototypes/rincon-compartido-concept/REPORT.md`). Nota: no probó red real (hotseat), ni sensación táctil, ni topología de 2 dispositivos — quedan como spikes/prototipos pendientes.
 - [ ] `/art-bible` antes de escribir cualquier GDD
 - [ ] Decompose concept into systems (`/map-systems`)
+- [ ] Spike técnico dedicado: descubrimiento de red local entre 2 dispositivos reales (peer discovery, permisos iOS Red Local/Bonjour, multicast lock/aislamiento de AP en Android, comportamiento ante pérdida del host) — **bloqueante antes de `/create-architecture`**
+- [ ] Spike técnico dedicado: patrón de botón de acción único y contextual en pantalla táctil real (tamaño de objetivo, auto-oclusión, toque vs. arrastre) — **bloqueante antes de `/create-architecture`**
 - [ ] Design each system (`/design-system [system-name]`) — usar aprendizajes del prototipo en Tuning Knobs y Formulas
+- [ ] Run `/create-architecture` — solo después de que ambos spikes técnicos de arriba resuelvan sus preguntas abiertas
 - [ ] Build vertical slice in Pre-Production (`/vertical-slice`) — validar el loop completo antes de comprometerse a Producción
 - [ ] Validate core loop with playtest (`/playtest-report`)
 - [ ] Plan first milestone (`/sprint-plan new`)

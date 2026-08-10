@@ -1,7 +1,7 @@
 # System GDD: Farm Economy — Cultivos, Terreno, Máquinas e Infraestructura
 
 *Created: 2026-08-10*
-*Status: Draft — revisado tras tres rondas de `/design-review` (2026-08-10). Ronda 1: veredicto MAJOR REVISION NEEDED, 8 especialistas + síntesis de creative-director, bloqueantes resueltos. Ronda 2 (mismo día, re-revisión): veredicto NEEDS REVISION, 5 bloqueantes adicionales resueltos. Ronda 3 (mismo día, re-revisión): veredicto NEEDS REVISION — el hallazgo principal de la síntesis fue que los 5 bloqueantes "resueltos" en ronda 2 tenían defectos vivos en ronda 3 porque los parches se insertaron localmente sin propagarse por Formulas/Edge Cases/Acceptance Criteria; esta ronda corrige eso y añade el Apéndice D (matriz de estado×acción×elegibilidad, tabla de EV del Pilar 5, matriz de cobertura de AC) como los tres artefactos verificables que la síntesis exigió antes de dar por cerrada la revisión. Ver Apéndice C, C2 y C3 para el registro completo de decisiones de las tres rondas. Tier: contenido MVP-adyacente / Vertical Slice — NO es contenido de MVP (ver Scope Tiers de `game-concept.md`).*
+*Status: Draft — revisado tras cuatro rondas de `/design-review` (2026-08-10). Ronda 1: veredicto MAJOR REVISION NEEDED, 8 especialistas + síntesis de creative-director, bloqueantes resueltos. Ronda 2 (mismo día, re-revisión): veredicto NEEDS REVISION, 5 bloqueantes adicionales resueltos. Ronda 3 (mismo día, re-revisión): veredicto NEEDS REVISION — el hallazgo principal de la síntesis fue que los 5 bloqueantes "resueltos" en ronda 2 tenían defectos vivos en ronda 3 porque los parches se insertaron localmente sin propagarse por Formulas/Edge Cases/Acceptance Criteria; esta ronda corrige eso y añade el Apéndice D (matriz de estado×acción×elegibilidad, tabla de EV del Pilar 5, matriz de cobertura de AC) como los tres artefactos verificables que la síntesis exigió antes de dar por cerrada la revisión. Ronda 4 (mismo día, pasada de verificación acotada, sin especialistas — confirmar que la ronda 3 se sostiene): encontró 2 bloqueantes reales que sobrevivieron a la propia auditoría de propagación de ronda 3 — el piso anti-softlock (5.10, AC 3d) no cubría el costo de resiembra tras una reparación gratuita (deadlock real alcanzable), y el cap de concurrencia de Fresa (3.2, 5.12) no contaba el estado Descansando, dejando abierta una vía de intercalado distinta a la que ronda 3 cerró. Ambos corregidos. Ver Apéndice C, C2, C3 y C4 para el registro completo de decisiones de las cuatro rondas. Tier: contenido MVP-adyacente / Vertical Slice — NO es contenido de MVP (ver Scope Tiers de `game-concept.md`).*
 *Origen: Sesión de diseño con ENGRANAJE (arquitecto de mecánicas), a partir de la hipótesis confirmada
 en `prototypes/rincon-compartido-concept/REPORT.md` (Concept Prototype Report — Economía Compartida + Amenazas)*
 *Propósito: especificación de sistemas lista para pasar a un agente de código que va a ampliar el
@@ -151,19 +151,33 @@ parcela). Para cerrar esto sin volver a penalizar la parcela individual (que ya 
 *cualquier* cultivo durante el descanso, no solo Fresa — otro hallazgo de ronda 3, ver el párrafo
 anterior sobre Descansando en 3.1), la regla se traslada de "por parcela" a **"por granja"**:
 
-- **Regla de concurrencia de Fresa (nueva en ronda 3)**: como máximo **una** parcela puede tener Fresa
-  en estado Creciendo o Lista al mismo tiempo, en toda la granja compartida. Si ya existe una parcela
-  con Fresa activa (Creciendo o Lista), Fresa no aparece como opción en el ciclo de semillas (regla
-  3.4) para ninguna otra parcela — igual que un cultivo aún no desbloqueado, no genera penalización,
-  solo no está disponible para elegir.
-- Esto cierra el intercalado: no pueden existir dos ciclos de Fresa progresando a la vez, sin importar
-  cuántas parcelas de Fresa posea el jugador o en qué estado de descanso estén las demás.
-- El estado Descansando, ahora que solo bloquea Fresa (no otros cultivos) en esa parcela específica,
-  vuelve a ser una decisión real: mientras la única parcela de Fresa activa de la granja descansa, el
-  jugador puede usar cualquier otra parcela para Trigo o Maíz sin restricción — la fricción del
-  descanso ya no es fricción de ejecución sin agencia (violación de Pilar 3 identificada en ronda 3),
-  es una decisión real sobre qué hacer con las demás parcelas mientras se espera el próximo ciclo de
-  Fresa.
+- **Regla de concurrencia de Fresa (nueva en ronda 3, alcance de estados corregido en ronda 4)**: como
+  máximo **una** parcela puede tener Fresa en estado Creciendo, Lista **o Descansando** al mismo
+  tiempo, en toda la granja compartida. Si ya existe una parcela con Fresa en cualquiera de esos tres
+  estados, Fresa no aparece como opción en el ciclo de semillas (regla 3.4) para ninguna otra parcela
+  — igual que un cultivo aún no desbloqueado, no genera penalización, solo no está disponible para
+  elegir.
+- **Corregido en ronda 4 de `/design-review` (la versión de ronda 3 solo bloqueaba Creciendo/Lista,
+  dejando el intercalado abierto a través de Descansando)**: si el gate solo mira Creciendo/Lista, en
+  el instante en que la parcela A se cosecha y entra en Descansando, Fresa vuelve a estar disponible
+  de inmediato en cualquier otra parcela — un jugador con 2+ parcelas de Fresa puede plantar B justo
+  en ese momento, de forma que el crecimiento de B (4s) absorbe por completo el descanso de A (3s) en
+  paralelo. La cadencia efectiva de cosecha baja de 7s (4s + 3s) a 4s, igual que si Descansando no
+  existiera, para cualquier jugador con 2+ parcelas de Fresa — exactamente el patrón de
+  atención-mínima que esta regla existe para cerrar, solo que a través de una puerta distinta a la que
+  la ronda 3 cerró (el intercalado entre dos ciclos Creciendo/Lista simultáneos, que sí queda cerrado,
+  pero no el intercalado vía Descansando). Incluir Descansando en el conjunto de estados que activan
+  el gate cierra esta puerta también: mientras A esté Descansando, Fresa sigue sin estar disponible en
+  ninguna otra parcela, así que B solo puede plantarse con Trigo o Maíz durante esos 3s.
+- Esto cierra el intercalado por completo: no pueden existir dos ciclos de Fresa progresando —ni uno
+  progresando mientras otro descansa— a la vez, sin importar cuántas parcelas de Fresa posea el
+  jugador.
+- El estado Descansando, que solo bloquea Fresa (no otros cultivos) en esa parcela específica, sigue
+  siendo una decisión real: mientras la única parcela de Fresa activa de la granja descansa (Creciendo,
+  Lista, o ahora también Descansando), el jugador puede usar cualquier otra parcela para Trigo o Maíz
+  sin restricción — la fricción del descanso no es fricción de ejecución sin agencia (violación de
+  Pilar 3 identificada en ronda 3), es una decisión real sobre qué hacer con las demás parcelas
+  mientras se espera el próximo ciclo de Fresa.
 
 ### 3.3 Terreno y expansión
 
@@ -466,8 +480,13 @@ donde `nº_parcelas_activas` = parcelas en estado **Creciendo o Lista únicament
 corregida en ronda 3 de `/design-review` — la definición anterior, "no vacías, no bloqueadas por
 reja", era auto-contradictoria para Marchita/Dañada/Reparando/Descansando, que no son "vacías" en
 sentido literal pero tampoco deberían presionar el ritmo de plagas; ver 3.1 y Apéndice D para la
-matriz completa). Esta es la misma definición que la elegibilidad de objetivo de plaga (3.5) — una
-parcela cuenta para el ritmo si y solo si puede ser objetivo.
+matriz completa). **Aclarado en ronda 4 (la formulación anterior era imprecisa, no solo redundante)**:
+esta definición **casi** coincide con la elegibilidad de objetivo de plaga (3.5), pero no son
+estrictamente equivalentes — hay una única excepción, ya documentada en 3.5 y en la matriz de
+Apéndice D.1: una parcela Lista bloqueada por silo lleno sigue contando para `nº_parcelas_activas`
+(sigue "ocupando" un ciclo de cultivo) pero **no** es objetivo válido de plaga (5.8 la excluye para
+evitar el doble castigo). La relación correcta es "objetivo de plaga válido ⟹ cuenta como activa",
+no "si y solo si" — ver Apéndice D.1 para la regla derivada completa.
 
 | nº parcelas activas | intervalo_min | intervalo_max |
 |---|---|---|
@@ -649,24 +668,42 @@ detalle y la recomendación.
    cultivo, lo cual era fricción de ejecución sin agencia, violando el Pilar 3). Ver 3.1, 3.2, la
    regla de concurrencia de Fresa por granja (3.2, nueva en ronda 3) y AC 9c.
 
-5.10. **(Nuevo en ronda 3 de `/design-review`) Saldo insuficiente para un costo forzoso (prevenir o
-   reparar) — piso anti-softlock del Pilar 5**: a diferencia de una compra discrecional (5.2), el
-   jugador no elige si enfrentar el costo de prevenir una plaga o reparar una parcela — estos costos
-   se le imponen. Regla general (ver 3.4): intentar pagar sin saldo suficiente simplemente no ejecuta
-   la acción (mismo feedback que 5.2), sin generar saldo negativo. Para **prevenir**: si no hay
-   saldo, la plaga simplemente sigue su curso y expira sin cobro al final de su ventana (regla 3.5
-   — este comportamiento ya existía implícitamente como "no prevenir", ahora se declara
-   explícitamente como la resolución cuando falta saldo, no solo cuando el jugador decide no actuar).
-   Para **reparar**: si no hay saldo, la parcela permanece Marchita/Dañada hasta que haya saldo —
-   sin generar deuda ni bloquear otras acciones. **Piso anti-softlock explícito (mandato de Pilar 5 de
-   `game-concept.md`, no implementado en rondas anteriores)**: en el caso límite donde el pozo
-   compartido está en $0 (o por debajo del costo de reparación más barato) **y** ninguna parcela está
-   en un estado productivo (todas Marchita, Dañada o Reparando — sin ninguna Creciendo/Lista que
+5.10. **(Nuevo en ronda 3 de `/design-review`, alcance ampliado en ronda 4 — ver corrección abajo)
+   Saldo insuficiente para un costo forzoso (prevenir o reparar) — piso anti-softlock del Pilar 5**:
+   a diferencia de una compra discrecional (5.2), el jugador no elige si enfrentar el costo de
+   prevenir una plaga o reparar una parcela — estos costos se le imponen. Regla general (ver 3.4):
+   intentar pagar sin saldo suficiente simplemente no ejecuta la acción (mismo feedback que 5.2), sin
+   generar saldo negativo. Para **prevenir**: si no hay saldo, la plaga simplemente sigue su curso y
+   expira sin cobro al final de su ventana (regla 3.5 — este comportamiento ya existía implícitamente
+   como "no prevenir", ahora se declara explícitamente como la resolución cuando falta saldo, no solo
+   cuando el jugador decide no actuar). Para **reparar**: si no hay saldo, la parcela permanece
+   Marchita/Dañada hasta que haya saldo — sin generar deuda ni bloquear otras acciones. **Piso
+   anti-softlock explícito (mandato de Pilar 5 de `game-concept.md`)**: en el caso límite donde el
+   pozo compartido está en $0 (o por debajo del costo de reparación más barato) **y** ninguna parcela
+   está en un estado productivo (todas Marchita, Dañada o Reparando — sin ninguna Creciendo/Lista que
    pueda generar ingreso), la siguiente reparación que el jugador intente se ejecuta **gratis** (sin
    descontar el costo), rompiendo el deadlock. Este piso nunca se activa si existe cualquier vía de
    ingreso disponible (una parcela Creciendo/Lista, o una venta pendiente) — es estrictamente el
    último recurso, igual que la resolución automática de plagas sin cobro que ya exige `game-
-   concept.md` Pilar 5. Ver AC 3d.
+   concept.md` Pilar 5.
+
+   **Corrección de ronda 4 (defecto encontrado en la ronda 4 de `/design-review` — la versión de
+   ronda 3 no cerraba el deadlock que dice cerrar)**: una reparación gratuita siempre termina en Vacía
+   (3.4, 4.6, "requiere replantar desde cero, paga semilla de nuevo"). Si el pozo seguía en $0
+   después de la reparación gratis (la reparación no genera dinero, solo evita el costo), el jugador
+   se queda con una parcela Vacía y sin saldo para comprar ni la semilla más barata (Trigo, $2) — sin
+   ningún cultivo Creciendo/Lista, el pozo nunca puede volver a subir de $0, y el "piso" tal como se
+   escribió en ronda 3 solo cubre el paso de reparar, no el paso de replantar que la propia reparación
+   exige para volver a producir ingreso. Es un segundo deadlock, alcanzable inmediatamente después de
+   que el primer piso se activa. **Se extiende el piso**: bajo la misma condición de activación (pozo
+   en $0 o por debajo del costo relevante, y ninguna parcela Creciendo/Lista) aplicada ahora también
+   al **plantar sobre una parcela Vacía que quedó así por una reparación gratuita reciente** — ese
+   primer intento de plantar Trigo (el cultivo más barato, siempre desbloqueado desde el inicio) tras
+   una reparación gratuita se ejecuta igualmente gratis si el pozo sigue sin saldo suficiente en ese
+   momento. El piso, en conjunto, garantiza una cadena completa reparar-gratis → replantar-gratis que
+   siempre logra devolver al menos una parcela a un estado productivo (Creciendo) sin depender de que
+   el pozo tenga saldo en ningún punto de la cadena — es la única forma de que la garantía de
+   no-deadlock del Pilar 5 se sostenga de verdad. Ver AC 3d.
 
 5.11. **(Nuevo en ronda 3 de `/design-review`) Downtime de reparación (Reparando)**: tras tocar una
    parcela Marchita o Dañada para repararla, la parcela entra en estado Reparando (4.0s Marchita /
@@ -675,11 +712,17 @@ detalle y la recomendación.
    reparación ni acelerarla. Al completarse, la parcela pasa a Vacía y requiere replantar desde cero
    (paga semilla de nuevo). Ver AC 3c.
 
-5.12. **(Nuevo en ronda 3 de `/design-review`) Concurrencia de Fresa a nivel de granja**: como máximo
-   una parcela puede tener Fresa en Creciendo o Lista a la vez, en toda la granja compartida (ver
-   3.2). Si el jugador intenta plantar Fresa en una segunda parcela mientras ya existe una activa,
-   Fresa simplemente no aparece como opción en el ciclo de semillas de esa parcela (regla 3.4) — no
-   hay feedback de error porque no es un intento fallido, es una opción no disponible, igual que un
+5.12. **(Nuevo en ronda 3 de `/design-review`, alcance de estados corregido en ronda 4) Concurrencia
+   de Fresa a nivel de granja**: como máximo una parcela puede tener Fresa en Creciendo, Lista **o
+   Descansando** a la vez, en toda la granja compartida (ver 3.2). **Corrección de ronda 4**: la
+   versión de ronda 3 solo contaba Creciendo/Lista, lo cual dejaba una puerta abierta — en el instante
+   en que una parcela pasa a Descansando tras cosechar, Fresa volvía a estar disponible de inmediato
+   en otra parcela, permitiendo que el crecimiento de la segunda absorbiera por completo el descanso
+   de la primera (cadencia efectiva de 4s en vez de 7s con 2+ parcelas de Fresa). Incluir Descansando
+   en el conjunto de estados que activan el gate cierra esa puerta. Si el jugador intenta plantar
+   Fresa en una segunda parcela mientras ya existe una en Creciendo, Lista o Descansando, Fresa
+   simplemente no aparece como opción en el ciclo de semillas de esa parcela (regla 3.4) — no hay
+   feedback de error porque no es un intento fallido, es una opción no disponible, igual que un
    cultivo aún no desbloqueado. Ver AC 9c.
 
 5.13. **(Nuevo en ronda 3 de `/design-review`) Carrera entre la auto-cosecha de la Cosechadora y una
@@ -820,7 +863,7 @@ detalle y la recomendación.
 | Canalización de venta | fórmula 4.4: 2.0s a 1.0s según tiers de Silo | 1–3s en los extremos | Ventana de vulnerabilidad al vender (mitigada por cancelación, regla 3.4) |
 | Límites de decoración | Valla 6× / Bandera 3× / Cartel 1× | mantener límites bajos | Evita clutter visual en el mapa |
 | Descanso post-cosecha de Fresa (nuevo, ronda 2; **alcance corregido en ronda 3** — ver 3.2/5.9, ahora solo bloquea replantar Fresa, no otros cultivos) | 3s | 2–5s | Ciclo efectivo de la Fresa (junto con el cap de concurrencia por granja, nuevo en ronda 3) — ya no es la única mitigación de monopolio de atención, ver 3.2 |
-| Cap de concurrencia de Fresa por granja (**nuevo en ronda 3**) | 1 parcela activa (Creciendo/Lista) a la vez, farm-wide | fijo en 1 — subirlo reabre el exploit de intercalado que esta regla existe para cerrar | Cierra el intercalado de 2+ parcelas de Fresa (ver 3.2, Edge Case 5.12) |
+| Cap de concurrencia de Fresa por granja (**nuevo en ronda 3, conjunto de estados corregido en ronda 4**) | 1 parcela en Creciendo, Lista **o Descansando** a la vez, farm-wide | fijo en 1; el conjunto de estados que activan el gate debe incluir Descansando — excluirlo reabre el exploit de intercalado vía descanso (ver ronda 4) | Cierra el intercalado de 2+ parcelas de Fresa, incluido el intercalado vía el estado de descanso (ver 3.2, Edge Case 5.12) |
 | Capacidad base del Silo (nuevo, ronda 2) | $150 | $100–$250 | Cuán pronto se siente el desbordamiento antes de la primera compra de Silo (ver 4.4, Edge Case 5.8) |
 | Downtime de reparación (**nuevo en ronda 3**) | 4.0s Marchita / 2.0s Dañada | 2–6s Marchita, 1–3s Dañada, Dañada siempre < Marchita | Instancia el trade-off de Pilar 5 (prevenir instantáneo/caro vs. reparar barato/con downtime) — ver 4.6, Apéndice D |
 | Multiplicador de ventana de reacción accesible (**nuevo en ronda 3, placeholder no vinculante**) | 1.0× (sin multiplicador aplicado por defecto) | 1.0×–2.0× | Modo de accesibilidad opcional para contenido dependiente de tiempo de reacción (3.5) — valor exacto y mecanismo de activación pendientes de diseño dedicado, este knob solo reserva el gancho |
@@ -874,12 +917,19 @@ detalle y la recomendación.
    los cuales tocarla produce el mismo feedback "no todavía" que sobre Creciendo. Al expirar el
    downtime, la parcela pasa a Vacía (no a Creciendo/Lista — requiere replantar y pagar semilla de
    nuevo).
-3d. **(nuevo en ronda 3 — piso anti-softlock del Pilar 5, antes no implementado en este documento)**
+3d. **(nuevo en ronda 3 — piso anti-softlock del Pilar 5, antes no implementado en este documento;
+   ampliado en ronda 4 — la versión de ronda 3 no cerraba el deadlock completo, ver Edge Case 5.10)**
    Dado un pozo compartido en $0 y todas las parcelas de la granja en Marchita, Dañada o Reparando
    (ninguna Creciendo/Lista), la siguiente reparación que el jugador intente se ejecuta gratis (sin
    descontar el costo). Dado el mismo pozo en $0 pero con al menos una parcela Creciendo o Lista
    (una vía de ingreso disponible), la reparación NO se ejecuta gratis — el piso solo se activa en el
-   caso límite sin ninguna vía de ingreso restante.
+   caso límite sin ninguna vía de ingreso restante. **Continuación (nueva en ronda 4)**: dada la
+   parcela que acaba de quedar Vacía por esa reparación gratuita, y el pozo compartido todavía sin
+   saldo suficiente para comprar semilla de Trigo ($2) en ese momento, el siguiente intento de
+   plantar Trigo en esa parcela también se ejecuta gratis (sin descontar el costo de semilla). Dado
+   el mismo escenario pero con el pozo ya con $2 o más disponibles, plantar Trigo cobra el costo
+   normal — el piso extendido solo se activa mientras la cadena reparar→replantar no tenga, en ningún
+   punto, una fuente de ingreso alternativa disponible.
 4. Dado el punto de venta, un toque simple inicia la canalización de venta (duración según fórmula
    4.4); durante la canalización el jugador que la inició no puede moverse. Un segundo toque sobre el
    punto de venta durante la canalización, de cualquiera de los dos jugadores (ver Edge Case 5.14), la
@@ -935,9 +985,11 @@ detalle y la recomendación.
    ronda 3)** Tras cosechar una parcela de Fresa a mano, esa parcela entra en estado Descansando
    durante exactamente 3.0s. Durante ese estado, intentar replantar Fresa en esa misma parcela
    produce el feedback "no todavía"; intentar plantar cualquier otro cultivo desbloqueado funciona de
-   inmediato, sin restricción. Adicionalmente (regla de concurrencia por granja, nueva en ronda 3):
-   mientras exista cualquier otra parcela con Fresa en Creciendo o Lista en la granja, Fresa no
-   aparece como opción en el ciclo de semillas de ninguna otra parcela.
+   inmediato, sin restricción. Adicionalmente (regla de concurrencia por granja, nueva en ronda 3,
+   alcance de estados corregido en ronda 4): mientras exista cualquier otra parcela con Fresa en
+   Creciendo, Lista **o Descansando** en la granja, Fresa no aparece como opción en el ciclo de
+   semillas de ninguna otra parcela — incluir Descansando en el gate (no solo Creciendo/Lista) cierra
+   el intercalado vía descanso que la versión de ronda 3 dejaba abierto (ver Edge Case 5.12).
 9d. **(nuevo en ronda 3 — Almacén de semillas no tenía ningún AC pese a ser un mecanismo
    determinista completo)** Dado el Almacén de semillas comprado y al menos un slot cargado con
    semilla de tipo X (cargado mediante el flujo de recarga de 3.7, con el costo de semilla ya
@@ -970,13 +1022,16 @@ ADVISORY. Ver Apéndice D — Matriz de cobertura de AC.
 
 ---
 
-## Apéndice A — Riesgos de balance abiertos (resumen, actualizado tras `/design-review` 2026-08-10, ronda 3)
+## Apéndice A — Riesgos de balance abiertos (resumen, actualizado tras `/design-review` 2026-08-10, ronda 4)
 
 Ver detalle completo en Edge Cases (sección 5) y Formulas (sección 4). Resumen de seguimiento.
 **Nota de ronda 3**: la síntesis de esta ronda encontró que los 5 ítems que ronda 2 había marcado
 "resuelto" (#1, #7, #8, #9, y el placeholder de red del Apéndice C2 #5) tenían defectos vivos —
 la etiqueta "resuelto" se retira o se acota explícitamente en cada uno de ellos abajo, y el
-detalle de por qué está en Apéndice D y en las secciones citadas.
+detalle de por qué está en Apéndice D y en las secciones citadas. **Nota de ronda 4**: la pasada de
+verificación acotada encontró que 2 de las correcciones de ronda 3 (#7 y #10 abajo) también tenían
+defectos vivos — ver las notas "Corregido en ronda 4" en cada uno y Apéndice C4 para el registro
+completo.
 
 1. ~~Fresa desequilibrada frente a Maíz/Trigo en $/s~~ — diferenciación por riesgo (Edge Case 5.6),
    no paridad, **sigue resuelto sin cambios en ronda 3**. El descanso post-cosecha (ítem 7 abajo) es
@@ -1009,16 +1064,20 @@ detalle de por qué está en Apéndice D y en las secciones citadas.
    propósito, depende del spike técnico de red (Edge Case 5.7). **Ronda 3 añadió una tercera clase**:
    la auto-cosecha diferida de la Cosechadora vs. una cosecha manual concurrente sobre el mismo
    objetivo (Edge Case 5.13) — igualmente sin resolver a propósito, solo enumerada para el spike.
-7. **(nuevo, ronda 2, corregido en ronda 3)** ~~Cosechadora de radio + Fresa combinadas volvían
-   "manual siempre vale la pena" y "decisión cada pocos minutos" simultáneamente falsos~~ — **la
-   mitigación de ronda 2 (descanso post-cosecha de 3s) no cerraba el problema**: un jugador con 2+
-   parcelas de Fresa podía intercalarlas y recuperar el mismo patrón de atención-cero sin perder
-   $/s, al costo de una parcela adicional. Corregido en ronda 3 con un **cap de concurrencia de
-   Fresa a nivel de granja** (máximo 1 parcela con Fresa activa a la vez, ver 3.2, Edge Case 5.12) —
-   esto cierra el intercalado independientemente de cuántas parcelas de Fresa posea el jugador. El
-   descanso de 3s en sí también se corrigió de alcance: ahora solo bloquea replantar Fresa en esa
-   parcela específica, no cualquier cultivo (antes era fricción de ejecución sin agencia, violando
-   el Pilar 3 — ver 3.1, Edge Case 5.9).
+7. **(nuevo, ronda 2, corregido en ronda 3, defecto vivo encontrado y cerrado en ronda 4)** ~~Cosechadora
+   de radio + Fresa combinadas volvían "manual siempre vale la pena" y "decisión cada pocos minutos"
+   simultáneamente falsos~~ — **la mitigación de ronda 2 (descanso post-cosecha de 3s) no cerraba el
+   problema**: un jugador con 2+ parcelas de Fresa podía intercalarlas y recuperar el mismo patrón de
+   atención-cero sin perder $/s, al costo de una parcela adicional. Corregido en ronda 3 con un **cap
+   de concurrencia de Fresa a nivel de granja** (máximo 1 parcela con Fresa activa a la vez, ver 3.2,
+   Edge Case 5.12) — esto cierra el intercalado independientemente de cuántas parcelas de Fresa posea
+   el jugador. El descanso de 3s en sí también se corrigió de alcance: ahora solo bloquea replantar
+   Fresa en esa parcela específica, no cualquier cultivo (antes era fricción de ejecución sin agencia,
+   violando el Pilar 3 — ver 3.1, Edge Case 5.9). **Corregido en ronda 4**: el cap de ronda 3 solo
+   contaba Creciendo/Lista, no Descansando — dejaba abierta una vía de intercalado distinta (plantar
+   una segunda parcela justo cuando la primera entra en descanso, absorbiendo los 3s de descanso
+   dentro del crecimiento de la segunda). Se amplía el gate para contar también Descansando (3.2,
+   5.12) — ahora sí cierra el intercalado por completo.
 8. **(nuevo, ronda 2, corregido en ronda 3)** ~~Silo sin capacidad base ni regla de
    desbordamiento~~ — capacidad base $150 (sin cambios). **Ronda 3 encontró y corrigió cuatro
    defectos en la resolución de ronda 2**: (a) el chequeo de desbordamiento era ambiguo entre
@@ -1037,12 +1096,19 @@ detalle de por qué está en Apéndice D y en las secciones citadas.
    Knobs); (c) el Silo tier 4+ prometía "sin límite de segmentos" sin considerar el presupuesto de
    draw calls — se añade un cap técnico de 6 segmentos visibles, independiente del cap económico
    (3.7, Tuning Knobs).
-10. **(nuevo, ronda 3)** Pilar 5 (anti-softlock, EV de prevenir vs. reparar) no estaba implementado
-   en este documento — la reparación era instantánea (sin el downtime que `game-concept.md` exige
-   para el patrón validado por el prototipo) y no existía piso anti-softlock para costos forzosos sin
-   saldo. Corregido: reparación ahora tiene downtime (4.6, Edge Case 5.11) y existe un piso explícito
-   para el caso límite de saldo $0 sin ninguna parcela productiva (Edge Case 5.10, AC 3d). Ver
-   Apéndice D para la tabla de EV completa — la relación se sostiene mejor que antes pero no es una
+10. **(nuevo, ronda 3, defecto vivo encontrado y cerrado en ronda 4)** Pilar 5 (anti-softlock, EV de
+   prevenir vs. reparar) no estaba implementado en este documento — la reparación era instantánea
+   (sin el downtime que `game-concept.md` exige para el patrón validado por el prototipo) y no existía
+   piso anti-softlock para costos forzosos sin saldo. Corregido en ronda 3: reparación ahora tiene
+   downtime (4.6, Edge Case 5.11) y existe un piso explícito para el caso límite de saldo $0 sin
+   ninguna parcela productiva (Edge Case 5.10, AC 3d). **Corregido en ronda 4**: el piso de ronda 3
+   solo cubría el costo de reparación, no el de resiembra que la propia reparación exige (siempre
+   termina en Vacía) — un pozo en $0 podía seguir en $0 después de la reparación gratuita, sin poder
+   pagar ni la semilla más barata, sin ningún cultivo Creciendo que generara ingreso: un deadlock real,
+   no solo teórico. Se extiende el piso para cubrir también el primer intento de plantar Trigo sobre
+   la parcela recién Vacía, bajo la misma condición de activación (5.10, AC 3d) — ahora la cadena
+   completa reparar-gratis → replantar-gratis garantiza volver a un estado productivo sin depender de
+   saldo en ningún punto. Ver Apéndice D para la tabla de EV completa — la relación se sostiene mejor que antes pero no es una
    dominancia limpia en todos los casos; ver Apéndice D para la recomendación de seguimiento.
 11. **(nuevo, ronda 3)** El spike de rendimiento que este documento declaraba como cobertura de su
    propio contenido en realidad está delimitado (por el propio `game-concept.md`) para el sistema de
@@ -1208,6 +1274,34 @@ estados de parcela distintos a Vacía; verificación explícita de `GPUParticles
 Compatibility (sigue dependiendo del spike de rendimiento ampliado, ver Dependencies); ledger
 consolidado de draw calls (pertenece al spike, no a este documento); viabilidad de Fresa en modo
 solo; free-riding general (fuera de alcance, depende del `/design-system` de economía).
+
+## Apéndice C4 — Registro de decisiones de la ronda 4 de `/design-review` (2026-08-10, pasada de verificación acotada)
+
+Modo: `lean` (sin especialistas — verificación de una sola sesión, enfocada en confirmar que los
+fixes de ronda 3 se sostienen, no una ronda adversarial completa). Objetivo explícito: comprobar que
+el Apéndice D.1, el mecanismo de disparo de la Cosechadora, el cap de concurrencia de Fresa, y la
+implementación de Pilar 5 son internamente consistentes y no dejaron huecos — exactamente el tipo de
+verificación que la síntesis de ronda 3 pidió para una futura ronda 4 (ver Apéndice C3).
+
+**Resultado**: la mayoría de lo auditado quedó limpio (mecanismo de la Cosechadora, numeración de
+Edge Cases y ACs, referencias cruzadas) — pero se encontraron 2 bloqueantes reales, ambos del mismo
+tipo que ronda 3 existe para prevenir: una regla que declara resolver un problema pero, al
+propagarse hasta el caso límite completo, no lo cierra del todo.
+
+| # | Bloqueante | Decisión aplicada |
+|---|---|---|
+| 1 | El piso anti-softlock (5.10, AC 3d) solo cubría el costo de reparación, no el de resiembra que la propia reparación exige (siempre termina en Vacía) — un pozo en $0 podía quedar permanentemente sin forma de volver a generar ingreso incluso después de la reparación gratuita, porque plantar Trigo ($2) seguía costando dinero que el pozo no tenía y no podía generar sin ningún cultivo Creciendo. Deadlock real, no solo teórico. | Piso extendido: si el pozo sigue sin saldo suficiente inmediatamente después de una reparación gratuita, el siguiente intento de plantar Trigo (el cultivo más barato, siempre desbloqueado) en la parcela recién Vacía también se ejecuta gratis, bajo la misma condición de activación (5.10, AC 3d) |
+| 2 | El cap de concurrencia de Fresa (3.2, 5.12) solo contaba Creciendo/Lista, no Descansando — un jugador con 2+ parcelas de Fresa podía plantar una segunda parcela en el instante en que la primera entraba en Descansando, absorbiendo el descanso de 3s dentro del crecimiento de 4s de la segunda y recuperando una cadencia de cosecha de 4s en vez de 7s, sin atención real al descanso. Reabría, por una puerta distinta, el mismo patrón de atención-mínima que la regla de ronda 3 existe para cerrar. | El gate de concurrencia ahora cuenta Creciendo, Lista **y** Descansando — Fresa deja de estar disponible en cualquier otra parcela mientras exista una parcela de Fresa en cualquiera de esos tres estados (3.2, 5.12, AC 9c, Tuning Knobs) |
+| 3 (recomendado, no bloqueante) | Formulas 4.3 afirmaba una equivalencia "si y solo si" entre `nº_parcelas_activas` y elegibilidad de objetivo de plaga, que la propia excepción de silo lleno (3.5, Apéndice D.1) contradice — es una implicación en un solo sentido, no una equivalencia | Corregida la formulación a "objetivo de plaga válido ⟹ cuenta como activa", con la excepción de silo lleno citada explícitamente (4.3) |
+
+Ítems verificados sin defectos en esta ronda: mecanismo de disparo trigger-bound de la Cosechadora y
+su retraso proporcional del 25% (consistente en 3.6, Tuning Knobs, AC 9, sin referencias residuales
+al valor fijo de 1.5s de rondas anteriores); numeración completa de Edge Cases (5.1–5.14) y
+Acceptance Criteria (1–11 con sub-letras); referencias cruzadas entre secciones.
+
+**Decisión de usuario tomada en esta ronda**: revisar los 2 bloqueantes de inmediato en la misma
+sesión, en vez de detener para una sesión aparte o aceptar tal cual — ninguno de los dos era
+advisory, ambos eran defectos reales de la garantía que la ronda 3 ya declaraba resuelta.
 
 ## Apéndice D — Artefactos verificables (nuevo en ronda 3, exigidos por la síntesis de creative-director)
 

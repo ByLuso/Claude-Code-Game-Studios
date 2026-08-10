@@ -1,172 +1,129 @@
 # Session State
 
 ## Current Task
-`/design-review design/gdd/farm-economy-system.md` — round 2 (full mode, 8
-specialists + creative-director synthesis) completed. Verdict: NEEDS REVISION,
-5 blocking items, all revised in-place this session. Awaiting a clean-context
-re-review to confirm these hold (round 3 verification pass) — user explicitly
-chose "re-review in a new session" as the next step. Next action: `/clear`
-then `/design-review design/gdd/farm-economy-system.md` again.
+`/design-review design/gdd/farm-economy-system.md` — round 4 (lean/narrow
+verification pass, no subagents, this session) completed and fixes applied
+in-place (not yet committed — see Files Modified below). Verdict: NEEDS
+REVISION → 2 real blockers found, both survived round 3's own
+propagation-failure audit, both fixed this session:
+1. The anti-softlock floor (5.10, AC 3d) only made *repair* free, not the
+   reseed that repair always requires (always ends in Vacía) — a pot stuck
+   at $0 after a free repair still couldn't afford even the cheapest seed
+   ($2 Trigo), with zero income path, so it was a genuine permanent
+   deadlock, not just a theoretical one. Fixed: the floor now also covers
+   the first Trigo-planting attempt on the newly-Vacía plot under the same
+   trigger condition.
+2. The farm-wide Fresa concurrency cap (3.2, 5.12) only gated on
+   Creciendo/Lista, not Descansando — a player with 2+ Fresa-eligible plots
+   could plant a second plot the instant the first entered its 3s rest,
+   fully hiding the rest inside the second plot's 4s growth and collapsing
+   effective harvest cadence back to 4s (as if the rest didn't exist) —
+   reopening the exact "atención-cero" pattern round 3 believed it had
+   closed, just through a different door. Fixed: the gate now also counts
+   Descansando.
+Also fixed 1 recommended (non-blocking) item: Formulas 4.3 claimed a
+"si y solo si" equivalence between `nº_parcelas_activas` and plague-target
+eligibility that the document's own silo-lleno exception (3.5, Apéndice
+D.1) contradicts — corrected to a one-directional implication.
+Documented as Apéndice C4, following the same pattern as C/C2/C3.
 
-## Farm Economy System — Round 2 Design Review (2026-08-10)
-5 blockers found and resolved in this pass (see Apéndice C2 in the GDD for
-the full decision log):
-1. Cosechadora de radio + Fresa combined to collapse decision variety and
-   make Trigo/Maíz manual harvest optional (Pilar 2 / Player Fantasy) →
-   added a 3s "Descansando" state after harvesting Fresa (§3.1, §3.2, Edge
-   Case 5.9, AC 9c, Tuning Knobs) — does not reopen round-1's $/s balance.
-2. Infrastructure (Silo/Almacén/Refugio) had no visual-presence rule unlike
-   Machines (Pilar 4) → added "Presencia visual" column to §3.7; Refugio's
-   radius now anchors to a physical structure.
-3. Silo had no base capacity or overflow rule → base capacity $150;
-   overflow blocks manual + auto harvest without loss (§3.7, §4.4, Edge
-   Case 5.8, AC 2b).
-4. Hold+repeated-tap seed-cycling gesture is categorically impossible with
-   one finger → reworded the provisional note in §3.4 so the touch-UX
-   spike is asked to select a different mechanism, not tune parameters.
-5. No baseline network-authority assumption stated, though AC3/AC6/AC8
-   already silently assumed one → added non-binding placeholder in
-   Dependencies (host-authoritative, clients send intents); extended Edge
-   Case 5.7 to cover concurrent-purchase races too.
+**Next action**: commit these round-4 fixes, then decide whether a round-5
+verification pass is warranted (round 4 was itself lean/solo, no
+specialists — could go either lean again or ask the user) or move on to the
+other open items (performance-spike scope gap, `game-concept.md` round-4,
+the two blocking technical spikes).
 
-Also added (non-blocking, honesty fix): Overview/Player Fantasy now
-explicitly scope the "decision every few minutes" promise to ~20-30 min of
-a session, since Silo tier 4+ stops being an interesting decision (see
-Apéndice A item 5).
+## Farm Economy System — Status Summary (2026-08-10, after 3 rounds + this session's edits)
+The GDD (`design/gdd/farm-economy-system.md`, ~1300 lines) is now a mature,
+internally cross-referenced spec covering: multi-crop with a 9-state plot
+state machine (Vacía/Creciendo/Lista/Pre-alerta/Marchita/Dañada/Reparando/
+Descansando, formally enumerated in Apéndice D.1), terrain expansion,
+Machines (Sembradora, Cosechadora — trigger-bound auto-harvest, proportional
+delay), Infrastructure (Silo tiers with base capacity + overflow rules,
+Almacén with manual-recharge friction, Refugio with a defined-radius visual
+anchor), decoration/comfort, milestone unlock with visible toasts, a full
+Pilar-5 repair-downtime/anti-softlock implementation, and an explicit
+Fresa farm-wide concurrency cap (closes an interleaving exploit round 2's
+fix missed). All three gating spikes from `game-concept.md` (entity-scale
+perf, network authority, touch-UX) are referenced with "⚠ Provisional"
+inline tags rather than invented solutions. `game-concept.md` was updated
+in an earlier round to close the bidirectional-dependency gap.
 
-Recommended (non-blocking) items surfaced but NOT yet addressed — left as
-open risk per Apéndice C2: Silo tier-4+ multiplier has no upper bound;
-Sembradora dominated on ROI by 4th plot (accepted as design texture);
-free-riding risk worsened by new spend categories (documented only);
-Cosechadora's "radio de 1 tile" distance metric undefined; 1.5s auto-harvest
-delay origin ambiguous; Fresa solo-mode viability; no accessibility option
-for reaction-time content; the entity-scale performance spike in
-game-concept.md is scoped to conveyor/worker automation, not to this GDD's
-actual content (flagged as a real gap, not yet fixed); GPUParticles2D
-support on Compatibility/Mobile renderer unverified; menu grouping once
-everything unlocks; AC6 not QA-testable without a debug overlay; AC1
-missing the "verify against current config" hedge AC3 has; missing ACs for
-Silo channeling per-tier, Almacén instant-plant, and Decoración/Confort
-visibility gating.
+Known open items, intentionally left unresolved (see Apéndice A, C3):
+performance spike doesn't actually cover this doc's own content yet (only
+conveyor/worker automation) — flagged as a real gap requiring spike-scope
+expansion or a dedicated second spike; Silo tier 4+ is only a nominal sink
+extension (re-labeled prestige/cosmetic, not a real runway fix); AC1 is
+explicitly blocked (not just provisional) until the touch-UX spike picks a
+one-finger-coherent gesture; three race-condition classes enumerated but
+deliberately unresolved pending the network spike; accessibility
+reaction-time multiplier and future-crop $/s band are non-binding
+placeholders only.
 
 ## Prior Task (resolved, context only)
-`/design-review design/gdd/game-concept.md` — round 3 (clean-context re-review)
-completed: 8 specialists + creative-director synthesis. Verdict: NEEDS REVISION,
-6 blocking items, all revised in-place. A round-4 verification re-review of
-game-concept.md is still outstanding from before this farm-economy-system
-review session started — see below, unchanged.
+`/design-review design/gdd/game-concept.md` — round 3 (clean-context
+re-review) completed and committed (`1444221`): 8 specialists +
+creative-director synthesis, 6 blocking items, all revised in-place.
+`game-concept.md` was also touched again afterward (not as a separate
+design-review round) to add the bidirectional reference to
+`farm-economy-system.md` required by `design-docs.md`'s Dependencies rule —
+see that file's own Dependencies section for the pointer. A dedicated
+round-4 verification re-review of `game-concept.md` itself was planned but
+never run — superseded by the pivot to writing and iterating
+`farm-economy-system.md` instead. Still technically open if anyone wants to
+close that loop, but not currently on the critical path.
 
 ## Progress Checklist
 - [x] Game concept written (`design/gdd/game-concept.md`)
 - [x] Engine configured (Godot 4.7.1, GDScript — `/setup-engine`)
 - [x] Concept prototype implemented, played, and reported — PROCEED verdict
       (`prototypes/rincon-compartido-concept/REPORT.md`)
-- [x] Round 1 `/design-review` (full mode) — verdict: NEEDS REVISION, 8
-      blocking items — all resolved
-- [x] Round 2 `/design-review` (full mode, 9 specialists) — verdict: NEEDS
-      REVISION, 6 blocking items — all resolved (see prior git history,
-      commit bcd0278)
-- [x] Round 3 `/design-review` (full mode, 8 specialists: game-designer,
-      systems-designer, economy-designer, network-programmer, ux-designer,
-      performance-analyst, godot-specialist, qa-lead + creative-director
-      synthesis) — verdict: NEEDS REVISION, 6 blocking items — all resolved
-      this session (see list below)
-- [ ] **Re-review in a fresh session** — run `/clear` then
-      `/design-review design/gdd/game-concept.md` again to confirm round 3's
-      fixes hold (this would be round 4 — creative-director explicitly
-      recommended this be a narrow verification pass, NOT another full
-      8-specialist adversarial round; the concept itself is sound, remaining
-      risk is in the edits just made, not the design)
-
-## Blocking Items Resolved This Session (2026-08-10, round 3 design-review)
-
-Key meta-finding from creative-director: round 2's fix to the MVP hypothesis
-(adding a 7-day/3-session/return-rate/survey instrument) was an
-over-correction — it measured co-presence not negotiation, didn't fit the
-MVP's own 4-8 week timeline, and required telemetry never added to scope.
-Replaced with a single-session, facilitator-observed criterion instead of
-patched again.
-
-1. **MVP core hypothesis rewritten** (was: multi-session/7-day/return-rate/
-   survey instrument that regressed from what the prototype actually showed
-   and required unbuilt instrumentation) → now: single-session,
-   facilitator-observed criterion — both players must exchange an explicit
-   proposal about how to respond *before* either spends, matching what the
-   prototype actually demonstrated. Overclaim in the prior note (attributing
-   multi-session criteria to the prototype) corrected.
-2. **Free-rider risk was undocumented, not resolved** → added explicit Open
-   Question: the softlock safeguard governs "pay vs. auto-resolve," not
-   "which player pays"; steady-state free-riding in normal (non-threat) play
-   remains unmitigated in MVP since the contribution-stats panel was cut.
-3. **Sink runway risk** (MVP has exactly one purchasable sink — the 2nd plot
-   — beyond prevent/repair, reproducing the prototype's "nothing to spend
-   on" boredom finding) → added as an explicit Design Risk with a playtest
-   trigger to watch for and a fallback (pull forward a cheap Vertical-Slice
-   sink if money runs out mid-MVP-test).
-4. **Partner-awareness UI gap** (2 separate devices, but no UI channel
-   specified for a player to perceive their partner's situation, despite
-   Key Dynamics and the MVP hypothesis assuming real-time coordination) →
-   added a design note in Key Dynamics, a new Open Question, and expanded
-   the touch-UX spike's scope to include this question.
-5. **Session-length contradiction** (Core Identity said 30-120 min, Target
-   Player Profile said 15-60 min — flagged non-blocking in round 2, never
-   fixed, escalated to blocking in round 3 because it directly parametrizes
-   onboarding-curve pacing) → reconciled to 15-60 min typical / up to 120 if
-   the pair extends, in both Core Identity and the Session-Level Core Loop
-   header.
-6. **Automation entity-scale/compound-load performance spike was not a
-   gating checklist item** (buried in Content Volume prose while the
-   networking and touch-UX spikes were explicit blocking checkboxes) →
-   promoted to a third explicit `- [ ]` gating item in Next Steps, correctly
-   sequenced *before* `/map-systems` (not just before `/create-architecture`,
-   since it determines grid size). Also named mobile OS backgrounding/
-   screen-lock on the host device as the dominant real-world "host loss"
-   trigger (more common than AP isolation or true disconnection), and noted
-   the `<10s` reconnect criterion needs a concrete detection trigger to be
-   QA-verifiable.
-
-**Closing policy applied** (per creative-director, to stop the
-"philosophically-correct-but-operationally-incomplete" pattern from
-recurring): Pillar 5's softlock safeguard and the MVP's exotic-resource
-differentiation rule now each state the *shape* the eventual `/design-system`
-formula must take (expected-value-relative-to-output for the safeguard; a
-$/time band relative to normal for exotic pricing) rather than just a
-qualitative direction — the exact numbers still defer to `/design-system`,
-but the shape is now pinned so `/design-system` can't produce a
-degenerate-at-the-boundaries result.
+- [x] `game-concept.md` rounds 1-3 `/design-review` — all blockers resolved
+      (commits f568e1d, bcd0278, 1444221)
+- [ ] `game-concept.md` round-4 verification pass — planned, not run, not
+      currently blocking (see Prior Task above)
+- [x] `farm-economy-system.md` written (commit 1017061)
+- [x] `farm-economy-system.md` round 1 `/design-review` (MAJOR REVISION
+      NEEDED, 13 blockers) — resolved (commit 1b2f08e)
+- [x] `farm-economy-system.md` round 2 `/design-review` (NEEDS REVISION, 5
+      blockers) — resolved (commit d413c92)
+- [x] `farm-economy-system.md` round 3 `/design-review` (NEEDS REVISION —
+      found round 2's fixes were superficial) — resolved with propagation
+      fix + Apéndice D verifiable artifacts (commit 3e00a12)
+- [ ] **`farm-economy-system.md` round 4 — narrow verification pass** (next
+      action, see Current Task above)
+- [ ] After round 4 clears (APPROVED or advisory-only CONCERNS): the
+      performance-spike scope gap (Apéndice A #11) needs a decision before
+      `/map-systems` — either expand the existing `game-concept.md` spike or
+      schedule a dedicated one for this document's content
+- [ ] Networking spike, touch-UX spike (both bloqueantes antes de
+      `/create-architecture`, per `game-concept.md` Next Steps)
+- [ ] `/design-system [system]` per system, then `/create-architecture`
 
 ## Key Decisions Carried Forward
 - Prototype validated: shared, unattributed economy (Pillar 1) + threat
   prevent-vs-repair trade-off (Pillar 5) genuinely generates co-op
   negotiation — this layer is NOT in question, don't re-litigate it.
-- The concept itself is sound per creative-director across all 3 rounds — no
-  pillar is wrong, no core system is misconceived. All blocking items so far
-  have been localized edits, not re-decisions of what the game is.
-- Still genuinely open/untested: real local-wifi networking between 2 mobile
-  devices (peer discovery, iOS/Android permissions, host-loss/backgrounding
-  behavior), the single contextual-action touch pattern on an actual
-  touchscreen (target size, self-occlusion, tap-vs-drag, camera pan/zoom
-  collision, partner-awareness UI), and automation entity-scale/compound
-  host performance. All three now have dedicated, correctly-sequenced
-  gating checklist entries in Next Steps.
-- Free-rider risk (steady-state, non-threat-window free-riding) and MVP sink
-  runway (only one purchasable sink) are now explicitly documented as open
-  risks rather than silently unresolved — needs a decision at `/map-systems`
-  or the economy `/design-system` pass: accept the risk consciously, or add
-  a lightweight mitigation.
+- The concept itself is sound per creative-director across all rounds on
+  both documents — no pillar is wrong, no core system is misconceived.
+- Three technical spikes remain the hard gate before implementation-ready
+  status on either document: entity-scale performance (before
+  `/map-systems`), networking authority (before `/create-architecture`),
+  touch-UX + partner-awareness (before `/create-architecture`). None have
+  run yet. `farm-economy-system.md`'s own content additionally lacks
+  explicit spike coverage even once the existing spike runs — see Apéndice
+  A #11 in that document.
+- Meta-lesson from round 3 (documented in Apéndice C3): local text-insertion
+  patches that don't propagate through Formulas/Edge Cases/Acceptance
+  Criteria produce fixes that look resolved but have live defects. Any
+  future patch to this document should check propagation the same way
+  round 3 did, not just add a paragraph where the problem was found.
 
 ## Files Modified This Session
-- `design/gdd/game-concept.md` — all round-3 revisions above
-- `production/session-state/active.md` — this file
+- `production/session-state/active.md` — this file (brought up to date;
+  no other files changed this turn)
 
 ## Current Phase
-Post-revision (round 3), pre-re-review. Next action: `/clear` then re-run
-`/design-review design/gdd/game-concept.md` as a **narrow verification pass**
-(creative-director's explicit recommendation — confirm the 6 edits above say
-what they should, not another full 8-specialist adversarial round). After
-that (assuming APPROVED or advisory-only CONCERNS): `/map-systems` — but note
-the new entity-scale performance spike is now gated *before* `/map-systems`,
-so that spike should run first if followed literally in Next Steps order.
-Then the other two gating spikes (networking, touch-UX — now including
-partner-awareness scope), then `/design-system [system]` per system, then
-`/create-architecture`.
+Post round-3-fix, pre round-4-verification, for `farm-economy-system.md`.
+Next action: run `/design-review design/gdd/farm-economy-system.md` as a
+narrow verification pass.

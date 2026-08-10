@@ -78,10 +78,10 @@ func _draw() -> void:
 			GrowthState.EMPTY:
 				draw_string(ThemeDB.fallback_font, Vector2(-40, -48), "Tierra vacía (acción = plantar)")
 			GrowthState.GROWING:
-				var size := lerp(10.0, 70.0, growth_progress)
-				var half := size / 2.0
+				var crop_size := lerp(10.0, 70.0, growth_progress)
+				var half_size := crop_size / 2.0
 				var green := Color(0.4, 0.75, 0.2).lerp(Color(0.9, 0.8, 0.1), growth_progress * 0.3)
-				draw_rect(Rect2(-half, -half, size, size), green)
+				draw_rect(Rect2(-half_size, -half_size, crop_size, crop_size), green)
 				draw_string(ThemeDB.fallback_font, Vector2(-38, -48), "Creciendo %d%%" % int(growth_progress * 100))
 			GrowthState.READY:
 				draw_rect(Rect2(-35, -35, 70, 70), Color(0.95, 0.85, 0.15))

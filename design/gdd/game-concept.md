@@ -70,7 +70,7 @@ La interdependencia económica real entre los dos jugadores (una sola cuenta, un
 ### Core Mechanics (Systems we build)
 
 1. Recolección manual rápida y fluida de 3 tipos de recursos base (cultivos, madera, minerales)
-2. Automatización mediante cintas transportadoras y trabajadores contratables, colocados en una cuadrícula 2D/isométrica
+2. Automatización mediante cintas transportadoras y trabajadores contratables, colocados en una cuadrícula 2D/isométrica — visión de automatización de **largo plazo**. Una capa de progresión más temprana (Máquinas de compra única, MVP-adyacente/Vertical Slice) la antecede sin reemplazarla; ver `design/gdd/farm-economy-system.md` (decisión tomada en su `/design-review` del 2026-08-10, sección Dependencies)
 3. Economía compartida (una sola cuenta bancaria) con venta de recursos
 4. Eventos de amenaza periódicos (plagas, derrumbes, incendios) prevenibles con protecciones compradas o resolubles con gestión reactiva
 5. Progresión de automatización que desbloquea nuevos tipos de recursos y piezas
@@ -208,7 +208,7 @@ Esta salvaguarda es un piso anti-softlock, no una vía económica viable: el tie
 | **Art Pipeline Complexity** | Low-Medium (2D custom) |
 | **Audio Needs** | Moderate (feedback de cosecha, alertas de amenaza, música ambiental relajante) |
 | **Networking** | **Cliente/host vía ENet** (API de multiplayer de alto nivel de Godot) — **NO es P2P puro**, un dispositivo actúa como host. Godot no incluye descubrimiento de red local (sin mDNS/broadcast integrado) — hay que implementarlo. Riesgos de plataforma sin validar: iOS requiere permiso de Red Local + declarar servicio Bonjour; Android puede tener multicast-lock o aislamiento de AP en algunos routers. **No probado aún** — el prototipo usó hotseat en 1 dispositivo, no red real. Pendiente de spike técnico dedicado antes de comprometer arquitectura. |
-| **Content Volume** | MVP: 2 parcelas (1 inicial + 1 comprable), 3 tipos de recurso base con diferenciación normal/exótico, **1 amenaza recurrente en total** (aplica a la operación compartida, no una por cada tipo de recurso — ver MVP Definition) con protección + reparación comprables, automatización básica. Techo de entidades activas (cintas/trabajadores simultáneos) sin definir aún — pendiente de spike de rendimiento antes de que `/map-systems` fije el tamaño de la cuadrícula. Visión completa: recursos "exóticos" adicionales, tech tree extenso, variedad de amenazas (una por tipo de recurso) |
+| **Content Volume** | MVP: 2 parcelas (1 inicial + 1 comprable), 3 tipos de recurso base con diferenciación normal/exótico, **1 amenaza recurrente en total** (aplica a la operación compartida, no una por cada tipo de recurso — ver MVP Definition) con protección + reparación comprables, automatización básica. Techo de entidades activas (cintas/trabajadores simultáneos) sin definir aún — pendiente de spike de rendimiento antes de que `/map-systems` fije el tamaño de la cuadrícula. Visión completa: recursos "exóticos" adicionales, tech tree extenso, variedad de amenazas (una por tipo de recurso). **Contenido MVP-adyacente/Vertical Slice** (multi-cultivo dentro del recurso "cultivo", expansión de terreno hasta 6 parcelas, Máquinas, infraestructura, decoración, confort) detallado en `design/gdd/farm-economy-system.md` — no sustituye este MVP, lo extiende para tiers posteriores; ese documento todavía depende de los tres spikes bloqueantes listados en Next Steps. |
 | **Procedural Systems** | Ninguno confirmado — posible generación aleatoria de amenazas (tipo, timing), no de terreno |
 
 ---

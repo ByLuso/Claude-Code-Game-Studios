@@ -37,7 +37,7 @@
 #   Each entry: name, status, source, referenced_by[], attributes{}, added, revised
 
 version: 1
-last_updated: ""
+last_updated: "2026-08-10"
 
 # ─── ENTITIES ────────────────────────────────────────────────────────────────
 # Named game-world objects: enemies, NPCs, characters, factions, bosses.
@@ -77,7 +77,65 @@ entities: []
 # Attribute fields: value_gold, weight, stackable, category, and any stat
 #   modifiers that another system (e.g., economy, crafting) might reference.
 
-items: []
+items:
+  - name: trigo
+    status: active
+    source: design/gdd/farm-economy-system.md
+    referenced_by:
+      - design/gdd/farm-economy-system.md
+    seed_cost_gold: 2
+    growth_duration_s: 6
+    units_on_harvest: 3
+    sell_price_per_unit_gold: 5
+    profit_per_second_gold: 2.17
+    plague_reaction_window_s: 6
+    unlocked_from_start: true
+    added: 2026-08-10
+    revised: ""
+    notes: "Baseline crop, cheapest and always unlocked. $/s reference point for
+      balancing future resource types (madera, minerales) against — see
+      profit_per_second formula below."
+
+  - name: maiz
+    status: active
+    source: design/gdd/farm-economy-system.md
+    referenced_by:
+      - design/gdd/farm-economy-system.md
+    seed_cost_gold: 5
+    growth_duration_s: 12
+    units_on_harvest: 5
+    sell_price_per_unit_gold: 8
+    profit_per_second_gold: 2.92
+    plague_reaction_window_s: 6
+    unlock_condition: "vender 100 unidades acumuladas de trigo"
+    added: 2026-08-10
+    revised: ""
+
+  - name: fresa
+    status: active
+    source: design/gdd/farm-economy-system.md
+    referenced_by:
+      - design/gdd/farm-economy-system.md
+    seed_cost_gold: 8
+    growth_duration_s: 4
+    units_on_harvest: 2
+    sell_price_per_unit_gold: 12
+    profit_per_second_gold: 4.00
+    plague_reaction_window_s: 4
+    unlock_condition: "comprar la 4a parcela"
+    farm_wide_concurrency_cap: 1   # solo 1 parcela con Fresa en Creciendo/Lista/Descansando a la vez
+    post_harvest_rest_s: 3.0
+    added: 2026-08-10
+    revised: ""
+    notes: "Deliberately the highest-risk/highest-reward crop -- NOT balanced to
+      $/s parity with maiz (a design decision made and re-confirmed across
+      rounds 1-3 of /design-review, see farm-economy-system.md Edge Case 5.6).
+      Risk-differentiated instead: shortest reaction window, manual-harvest-only
+      (excluded from the Cosechadora machine), farm-wide concurrency cap.
+      Its color (red) is reserved EXCLUSIVELY for this crop in the art bible
+      (design/art/art-bible.md Section 4) -- no other UI/world element may use
+      red, since red was deliberately freed from threat-alert duty (which uses
+      blue-white instead) specifically to give this crop that identity."
 
 # Example:
 #
@@ -106,7 +164,52 @@ items: []
 #   output_range[min, max], added
 # Optional: expression (the actual formula), notes
 
-formulas: []
+formulas:
+  - name: profit_per_second
+    status: active
+    source: design/gdd/farm-economy-system.md
+    referenced_by:
+      - design/gdd/farm-economy-system.md
+    variables:
+      - unidades_al_cosechar
+      - precio_venta
+      - coste_semilla
+      - duracion_creciendo
+    output_range: [2.17, 4.00]   # observado actual: trigo 2.17, maiz 2.92, fresa 4.00 $/s
+    expression: "(unidades_al_cosechar * precio_venta - coste_semilla) / duracion_creciendo"
+    notes: "Currently only instantiated for the 3 crop types (see items above).
+      A future GDD for wood or mineral resources (game-concept.md names these as
+      the other 2 base resource types alongside cultivo) will very likely need an
+      analogous $/output-time formula -- check its output range against this one's
+      2.17-4.00 $/s band before deciding whether the new resource type should sit
+      inside that band or deliberately outside it (and if outside, document why,
+      matching how fresa's high end was a deliberate risk/reward choice, not an
+      oversight). game-concept.md's MVP Definition also already requires a
+      'banda relativa' rule for exotic crop variants that hasn't been designed
+      yet -- that future /design-system pass should reconcile with this entry too."
+    added: 2026-08-10
+    revised: ""
+
+  - name: plague_interval
+    status: active
+    source: design/gdd/farm-economy-system.md
+    referenced_by:
+      - design/gdd/farm-economy-system.md
+    variables:
+      - num_parcelas_activas
+    output_range: [25, 63]   # segundos: intervalo_min a 0 parcelas = 25s, intervalo_max a 6 parcelas = 63s
+    expression: "intervalo_min = 25 + (num_parcelas_activas * 3); intervalo_max = 45 + (num_parcelas_activas * 3)"
+    notes: "This is currently scoped to crop plots only (Creciendo/Lista state,
+      valid for 0-6 plots per farm-economy-system.md Formulas 4.3). game-concept.md's
+      elevator pitch names 3 distinct threat types across the 3 resources --
+      plagas (crops), derrumbes/collapses (presumably madera/wood), incendios/fires
+      (presumably minerales/mineral) -- so a future threats/amenazas GDD will need
+      its own interval formula per threat type. Whether they should share this same
+      shape (linear scaling with active-entity count + a global cooldown, see
+      plague_cooldown_global constant below) or diverge is an open design question,
+      not yet decided anywhere."
+    added: 2026-08-10
+    revised: ""
 
 # Example:
 #
@@ -139,7 +242,85 @@ formulas: []
 #
 # Required fields: name, status, source, referenced_by, value, unit, added
 
-constants: []
+constants:
+  - name: shared_money_pool
+    status: active
+    source: design/gdd/game-concept.md
+    referenced_by:
+      - design/gdd/game-concept.md
+      - design/gdd/farm-economy-system.md
+    value: "single unattributed pool"
+    unit: n/a
+    added: 2026-08-10
+    revised: ""
+    notes: "Pilar 1 (Compartido, no dividido) -- one shared bank account, no
+      per-player attribution anywhere. This is the single most load-bearing
+      cross-system constant in the whole design: every future GDD (madera,
+      minerales, amenazas, any UI/economy work) MUST respect it. The art bible
+      (design/art/art-bible.md Section 1 Principle 2, Section 4, Section 7) already
+      encodes this visually -- no per-player color territory, no player-owned UI
+      chrome anywhere. Known unmitigated risk tied to this constant: free-riding
+      (one player carrying more economic weight than the other) is explicitly
+      documented as unresolved in game-concept.md's Open Questions -- still true."
+
+  - name: plague_cooldown_global
+    status: active
+    source: design/gdd/farm-economy-system.md
+    referenced_by:
+      - design/gdd/farm-economy-system.md
+    value: 15
+    unit: seconds
+    added: 2026-08-10
+    revised: ""
+    notes: "Minimum time between plague triggers across DIFFERENT plots (not
+      per-plot -- see plague_interval formula above for the per-plot timer).
+      Safe tuning range per farm-economy-system.md Tuning Knobs: 10-20s. A future
+      amenazas/threats GDD covering derrumbes (wood) and incendios (mineral) should
+      decide whether this cooldown is per-resource-type or global across the whole
+      shared operation -- not yet decided."
+
+  - name: repair_downtime_marchita
+    status: active
+    source: design/gdd/farm-economy-system.md
+    referenced_by:
+      - design/gdd/farm-economy-system.md
+    value: 4.0
+    unit: seconds
+    added: 2026-08-10
+    revised: ""
+    notes: "Pilar 5's 'reparar es barato pero tiene downtime' trade-off, for the
+      more severe failure state (Marchita, no Refugio). Paired constant:
+      repair_downtime_danada = 2.0s (less severe, requires Refugio). Together these
+      are the concrete instantiation of Pilar 5's core mandate -- any future threat
+      type (derrumbes, incendios) implementing the same prevent-vs-repair pattern
+      game-concept.md requires should define its own downtime values but stay
+      recognizably in this family (a few seconds, always > 0, always paired with a
+      cheaper-but-slower vs costlier-but-instant choice)."
+
+  - name: repair_downtime_danada
+    status: active
+    source: design/gdd/farm-economy-system.md
+    referenced_by:
+      - design/gdd/farm-economy-system.md
+    value: 2.0
+    unit: seconds
+    added: 2026-08-10
+    revised: ""
+
+  - name: silo_base_capacity
+    status: active
+    source: design/gdd/farm-economy-system.md
+    referenced_by:
+      - design/gdd/farm-economy-system.md
+    value: 150
+    unit: gold (valor de venta acumulado sin vender)
+    added: 2026-08-10
+    revised: ""
+    notes: "Crop-specific storage constant. A future madera/minerales GDD will
+      likely need an analogous storage-capacity constant (a 'deposito de madera',
+      'deposito de minerales', or similar) -- check pacing against this value rather
+      than picking a number in isolation, so all 3 resource types feel comparably
+      paced in how often the shared pool needs tending."
 
 # Example:
 #

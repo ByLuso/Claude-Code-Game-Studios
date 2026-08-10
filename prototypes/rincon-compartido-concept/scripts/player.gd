@@ -55,6 +55,10 @@ func _do_action() -> void:
 		var harvested: int = nearby_crop.harvest()
 		if harvested > 0:
 			Economy.add_to_silo(harvested)
+			return
+		if nearby_crop.plant():
+			return
+		return
 	elif can_sell:
 		Economy.sell_silo()
 	elif ThreatManager.state == ThreatManager.State.WARNING:

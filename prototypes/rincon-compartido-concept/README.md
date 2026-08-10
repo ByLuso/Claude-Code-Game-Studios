@@ -36,16 +36,21 @@ este prototipo.
 
 ## Cómo jugar
 
-- El rectángulo verde es el **cultivo** — acércate y pulsa tu tecla de acción
-  para cosechar (1 unidad por pulsación, se regenera con el tiempo).
+- El cuadro de tierra es el **cultivo**. Tu tecla de acción es contextual:
+  - **Tierra vacía** (marrón) → plantar.
+  - **Creciendo** (verde, crece visualmente con el tiempo, ~6s) → esperar, no
+    puedes cosechar todavía.
+  - **Listo** (amarillo brillante) → cosechar (da 3 unidades al silo de golpe).
 - El rectángulo azul es el **punto de venta** — acércate y pulsa tu tecla de
   acción para vender todo lo que llevan en el silo compartido y convertirlo en
   dinero compartido.
-- Cada cierto tiempo aparece una **alerta de plaga** en el HUD (texto naranja).
-  Durante la ventana de alerta, cualquiera de los dos puede ir al cultivo y
-  pulsar su tecla de acción para **prevenir** pagando $15 del dinero compartido.
-- Si nadie previene a tiempo, la plaga **golpea**: el cultivo deja de producir
-  hasta que alguien vaya y pague $10 para **reparar**.
+- Cada cierto tiempo aparece una **alerta de plaga**: verás un **borde rojo
+  pulsante alrededor del cultivo** además del texto naranja en el HUD. Durante
+  esa ventana, cualquiera de los dos puede ir al cultivo y pulsar su tecla de
+  acción para **prevenir** pagando $15 del dinero compartido.
+- Si nadie previene a tiempo, la plaga **golpea**: si había algo plantado o
+  listo, se pierde (vuelve a tierra vacía) y hay que pagar $10 para
+  **reparar/replantar**.
 - El dinero y el silo son compartidos entre los dos jugadores — todas las
   decisiones de gasto afectan a ambos.
 

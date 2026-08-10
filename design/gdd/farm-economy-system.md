@@ -1,7 +1,7 @@
 # System GDD: Farm Economy — Cultivos, Terreno, Máquinas e Infraestructura
 
 *Created: 2026-08-10*
-*Status: Draft — revisado tras cinco rondas de `/design-review` (2026-08-10). Ronda 1: veredicto MAJOR REVISION NEEDED, 8 especialistas + síntesis de creative-director, bloqueantes resueltos. Ronda 2 (mismo día, re-revisión): veredicto NEEDS REVISION, 5 bloqueantes adicionales resueltos. Ronda 3 (mismo día, re-revisión): veredicto NEEDS REVISION — el hallazgo principal de la síntesis fue que los 5 bloqueantes "resueltos" en ronda 2 tenían defectos vivos en ronda 3 porque los parches se insertaron localmente sin propagarse por Formulas/Edge Cases/Acceptance Criteria; esta ronda corrige eso y añade el Apéndice D (matriz de estado×acción×elegibilidad, tabla de EV del Pilar 5, matriz de cobertura de AC) como los tres artefactos verificables que la síntesis exigió antes de dar por cerrada la revisión. Ronda 4 (mismo día, pasada de verificación acotada, sin especialistas): encontró 2 bloqueantes reales que sobrevivieron a la propia auditoría de propagación de ronda 3 — el piso anti-softlock (5.10, AC 3d) no cubría el costo de resiembra tras una reparación gratuita, y el cap de concurrencia de Fresa (3.2, 5.12) no contaba el estado Descansando. Ambos corregidos. Ronda 5 (mismo día, pasada de verificación acotada sobre los fixes de ronda 4): encontró que la corrección del piso anti-softlock de ronda 4 seguía atada a un historial causal específico ("vino de una reparación gratuita") en vez de al estado de la granja, dejando sin cubrir el mismo deadlock alcanzado por una secuencia de reparaciones pagadas. Generalizado a una condición puramente de estado. Ver Apéndice C, C2, C3, C4 y C5 para el registro completo de decisiones de las cinco rondas. Tier: contenido MVP-adyacente / Vertical Slice — NO es contenido de MVP (ver Scope Tiers de `game-concept.md`).*
+*Status: Draft — revisado tras cinco rondas de `/design-review` (2026-08-10). Ronda 1: veredicto MAJOR REVISION NEEDED, 8 especialistas + síntesis de creative-director, bloqueantes resueltos. Ronda 2 (mismo día, re-revisión): veredicto NEEDS REVISION, 5 bloqueantes adicionales resueltos. Ronda 3 (mismo día, re-revisión): veredicto NEEDS REVISION — el hallazgo principal de la síntesis fue que los 5 bloqueantes "resueltos" en ronda 2 tenían defectos vivos en ronda 3 porque los parches se insertaron localmente sin propagarse por Formulas/Edge Cases/Acceptance Criteria; esta ronda corrige eso y añade el Apéndice D (matriz de estado×acción×elegibilidad, tabla de EV del Pilar 5, matriz de cobertura de AC) como los tres artefactos verificables que la síntesis exigió antes de dar por cerrada la revisión. Ronda 4 (mismo día, pasada de verificación acotada, sin especialistas): encontró 2 bloqueantes reales que sobrevivieron a la propia auditoría de propagación de ronda 3 — el piso anti-softlock (5.10, AC 3d) no cubría el costo de resiembra tras una reparación gratuita, y el cap de concurrencia de Fresa (3.2, 5.12) no contaba el estado Descansando. Ambos corregidos. Ronda 5 (mismo día, pasada de verificación acotada sobre los fixes de ronda 4): encontró que la corrección del piso anti-softlock de ronda 4 seguía atada a un historial causal específico ("vino de una reparación gratuita") en vez de al estado de la granja, dejando sin cubrir el mismo deadlock alcanzado por una secuencia de reparaciones pagadas. Generalizado a una condición puramente de estado. Ver Apéndice C, C2, C3, C4 y C5 para el registro completo de decisiones de las cinco rondas. **Actualización posterior (2026-08-10, fuera del flujo de `/design-review`)**: se resolvió la decisión de alcance de spike pendiente en Apéndice A #11 — el spike de rendimiento de `game-concept.md` se amplía para incluir una escena combinada (automatización + contenido completo de este documento a tier Vertical Slice) en vez de programar un spike separado; el spike en sí sigue sin ejecutarse. Tier: contenido MVP-adyacente / Vertical Slice — NO es contenido de MVP (ver Scope Tiers de `game-concept.md`).*
 *Origen: Sesión de diseño con ENGRANAJE (arquitecto de mecánicas), a partir de la hipótesis confirmada
 en `prototypes/rincon-compartido-concept/REPORT.md` (Concept Prototype Report — Economía Compartida + Amenazas)*
 *Propósito: especificación de sistemas lista para pasar a un agente de código que va a ampliar el
@@ -799,15 +799,20 @@ detalle y la recomendación.
   automatización de largo plazo, **no** para el contenido específico de este documento (hasta 6
   parcelas con estados animados independientes vía `AnimationPlayer`, enjambre de plaga vía
   `MultiMeshInstance2D`, partículas pooled por parcela, 2 máquinas, y hasta 6 segmentos visibles de
-  Silo + Almacén + Refugio + hasta 10 ítems de decoración simultáneos). **El contenido de este
-  documento no tiene, a día de hoy, ningún spike que lo cubra.** Se corrige la afirmación aquí para
-  que no contradiga el propio Apéndice C2, y se añade como acción concreta: el alcance del spike de
-  `game-concept.md` debe ampliarse explícitamente para incluir una escena de prueba con el contenido
-  completo de este documento (6 parcelas + evento de enjambre + ambas máquinas + Silo en su tier
-  máximo alcanzable en una sesión + infraestructura/decoración completas), o debe programarse un
-  segundo spike dedicado a este contenido — cualquiera de las dos opciones, pero no ninguna. **Este
-  documento sigue sin estar listo para implementación hasta que exista cobertura real de spike para
-  su propio contenido** — ver nota de Status al inicio del documento.
+  Silo + Almacén + Refugio + hasta 10 ítems de decoración simultáneos). **Resuelto (decisión de alcance
+  de spike tomada el 2026-08-10, fuera del flujo de `/design-review` — ver Apéndice A #11)**: se
+  descartó programar un segundo spike separado — el
+  alcance del spike existente en `game-concept.md` Next Steps se amplió para incluir una **escena de
+  prueba combinada**: automatización a techo de entidades + el contenido completo de este documento
+  (6 parcelas + evento de enjambre + ambas Máquinas + Silo en su tier máximo alcanzable en una sesión +
+  infraestructura/decoración completas) al tier de Vertical Slice, ambos simultáneos en pantalla. Es el
+  escenario de carga real que el juego produce una vez que Vertical Slice suma la capa de granja sobre
+  la automatización del MVP — más exigente, y más honesto de medir, que cualquiera de los dos por
+  separado; un spike que solo probara automatización o solo granja podría pasar individualmente y aun
+  así reventar el presupuesto de 16.6ms/<100 draw calls en el caso combinado real. **Este documento
+  sigue sin estar listo para implementación hasta que ese spike ampliado corra de verdad** — la
+  decisión de alcance ya está tomada, pero el spike en sí mismo sigue sin ejecutarse, ver nota de
+  Status al inicio del documento.
 - **Depende del spike técnico de red** (`game-concept.md` Next Steps, **bloqueante antes de
   `/create-architecture`**): este documento introduce una capa entera de estado compartido mutable
   (crecimiento por parcela, pozo de dinero, temporizadores de plaga, propiedad de máquinas, tiers de
@@ -1129,12 +1134,18 @@ completo.
    Trigo gratis en **cualquier** parcela Vacía, sin importar su historial. Ver Apéndice D para la tabla
    de EV completa — la relación se sostiene mejor que antes pero no es una dominancia limpia en todos
    los casos; ver Apéndice D para la recomendación de seguimiento.
-11. **(nuevo, ronda 3)** El spike de rendimiento que este documento declaraba como cobertura de su
-   propio contenido en realidad está delimitado (por el propio `game-concept.md`) para el sistema de
-   cintas/trabajadores de largo plazo, no para este documento — contradicción entre Dependencies y el
-   propio Apéndice C2 de ronda 2. Corregido: Dependencies ahora declara honestamente que este
-   contenido no tiene cobertura de spike todavía, y pide ampliar el alcance del spike existente o
-   programar uno dedicado — ver Dependencies.
+11. **(nuevo, ronda 3, decisión de alcance tomada el 2026-08-10 fuera del flujo de `/design-review`)**
+   El spike de rendimiento que este documento declaraba como cobertura de su propio contenido en
+   realidad está delimitado (por el propio `game-concept.md`) para el sistema de cintas/trabajadores de
+   largo plazo, no para este documento — contradicción entre Dependencies y el propio Apéndice C2 de
+   ronda 2. Corregido en ronda 3: Dependencies pasó a declarar honestamente que este contenido no tenía
+   cobertura de spike todavía, con dos opciones abiertas (ampliar el spike existente o programar uno
+   dedicado) sin decidir entre ellas. **Resuelto**: se descartó el spike separado — se amplió el spike
+   existente de `game-concept.md` Next Steps para incluir una escena de prueba combinada (automatización
+   a techo + el contenido completo de este documento a tier Vertical Slice, simultáneos), que es el
+   escenario de carga real del juego y más exigente que cualquiera de los dos por separado. La decisión
+   de alcance ya está tomada y documentada en ambos documentos; el spike en sí (ejecutarlo en hardware
+   de referencia) sigue pendiente — ver Dependencies.
 12. **(nuevo, ronda 3)** Almacén de semillas no tenía mecanismo de recarga especificado ni dominaba
    o era dominado de forma consciente frente a Sembradora rápida pese a ser más barato y más rápido.
    Corregido: mecanismo de recarga manual con fricción (costo de semilla + ~1s por slot) que

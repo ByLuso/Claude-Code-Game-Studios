@@ -1,70 +1,84 @@
-# Godot — Breaking Changes
+# Godot Breaking Changes (Post-4.3 → 4.7.1)
 
-Last verified: 2026-02-12
+*Last verified: 2026-08-10*
 
-Changes between Godot versions, focused on post-LLM-cutoff changes (4.4+).
+This file covers API-level breaking changes across the versions the LLM's
+training data does NOT reliably cover (4.4 through 4.7). Always check here
+before assuming a 4.3-era API still behaves the same way.
 
-## 4.5 → 4.6 (Jan 2026 — POST-CUTOFF, HIGH RISK)
+## 4.6 → 4.7
 
-| Subsystem | Change | Details |
-|-----------|--------|---------|
-| Physics | Jolt is now the DEFAULT 3D physics engine | New projects use Jolt automatically. Existing projects keep their setting. Some HingeJoint3D properties (like `damp`) only work with GodotPhysics. |
-| Rendering | Glow processes BEFORE tonemapping | Was after tonemapping. Scenes with glow will look different. Adjust intensity/blend in WorldEnvironment. |
-| Rendering | D3D12 default on Windows | Was Vulkan. For better driver compatibility. |
-| Rendering | AgX tonemapper new controls | White point and contrast parameters added. |
-| Core | Quaternion initializes to identity | Was zero. Unlikely to affect most code but technically breaking. |
-| UI | Dual-focus system | Mouse/touch focus now separate from keyboard/gamepad focus. Visual feedback differs by input method. |
-| Animation | IK system fully restored | CCDIK, FABRIK, Jacobian IK, Spline IK, TwoBoneIK via SkeletonModifier3D nodes. |
-| Editor | New "Modern" theme default | Grayscale replaces blue-tint. Restore: Editor Settings → Interface → Theme → Style: Classic |
-| Editor | "Select Mode" keybind changed | New "Select Mode" (v key) prevents accidental transforms. Old mode renamed "Transform Mode" (q key). |
-| 2D | TileMapLayer scene tile rotation | Scene tiles can now be rotated like atlas tiles. |
-| Localization | CSV plural form support | No longer requires Gettext for plurals. Context columns added. |
-| C# | Automatic string extraction | Translation strings auto-extracted from C# code. |
-| Plugins | New EditorDock class | Specialized container for plugin docks with layout control. |
+Canonical source: [Upgrading from Godot 4.6 to 4.7](https://docs.godotengine.org/en/stable/tutorials/migrating/upgrading_to_godot_4.7.html)
 
-## 4.4 → 4.5 (Late 2025 — POST-CUTOFF, HIGH RISK)
+### Core
+- `Object.is_class()` — parameter type changed from `String` to `StringName`.
+- `ZIPPacker.start_file()` — gained optional `permissions` and `modified_time` parameters.
+- `OptimizedTranslation.generate()` — return type changed from `void` to `bool`.
 
-| Subsystem | Change | Details |
-|-----------|--------|---------|
-| GDScript | Variadic arguments added | Functions can accept `...` arbitrary params — new language feature |
-| GDScript | `@abstract` decorator | Abstract classes and methods now enforceable |
-| GDScript | Script backtracing | Detailed call stacks available even in Release builds |
-| Rendering | Stencil buffer support | New capability for advanced visual effects |
-| Rendering | SMAA 1x antialiasing | New post-processing AA option |
-| Rendering | Shader Baker | Pre-compiles shaders — reportedly 20x faster startup on some demos |
-| Rendering | Bent normal maps, specular occlusion | New material features |
-| Accessibility | Screen reader support | Control nodes work with accessibility tools via AccessKit |
-| Editor | Live translation preview | Test GUI layouts in different languages in-editor |
-| Physics | 3D interpolation rearchitected | Moved from RenderingServer to SceneTree. API unchanged but internals differ. |
-| Animation | BoneConstraint3D | New: AimModifier3D, CopyTransformModifier3D, ConvertTransformModifier3D |
-| Resources | `duplicate_deep()` added | New explicit method for deep duplication of nested resources |
-| Navigation | Dedicated 2D navigation server | No longer a proxy to 3D navigation; smaller export for 2D games |
-| UI | FoldableContainer node | New accordion-style container for collapsible UI sections |
-| UI | Recursive Control behavior | Disable mouse/focus interactions across entire node hierarchies |
-| Platform | visionOS export support | New platform target |
-| Platform | SDL3 gamepad driver | Delegated gamepad handling to SDL library |
-| Platform | Android 16KB page support | Required for Google Play targeting Android 15+ |
+### 2D & 3D Particles
+- `CPUParticles2D/3D.request_particles_process()` — gained optional `process_time_residual` parameter.
+- `GPUParticles2D/3D.request_particles_process()` — gained optional `process_time_residual` parameter.
+- Particle angular velocity corrections changed — particles using rotation will look subtly different than in 4.6.
 
-## 4.3 → 4.4 (Mid 2025 — NEAR CUTOFF, VERIFY)
+### GUI / Control Nodes
+- `Control.accessibility_live` — type changed to `AccessibilityServer.AccessibilityLiveMode`.
+- `RichTextLabel.ImageUpdateMask.UPDATE_WIDTH_IN_PERCENT` — renamed to `UPDATE_WIDTH_UNIT`.
+- `RichTextLabel.add_image()` / `update_image()` — width/height now `float`; `width_in_percent`/`height_in_percent` renamed to `width_unit`/`height_unit` with a type change.
+- **Control offset transforms** changed how some anchored layouts resolve — retest menus and HUD layouts first (directly relevant to this project's economy/HUD panels).
 
-| Subsystem | Change | Details |
-|-----------|--------|---------|
-| Core | `FileAccess.store_*` return `bool` | Was `void`. Methods: `store_8`, `store_16`, `store_32`, `store_64`, `store_buffer`, `store_csv_line`, `store_double`, `store_float`, `store_half`, `store_line`, `store_pascal_string`, `store_real`, `store_string`, `store_var` |
-| Core | `OS.execute_with_pipe` | Added optional `blocking` parameter |
-| Core | `RegEx.compile/create_from_string` | Added optional `show_error` parameter |
-| Rendering | `RenderingDevice.draw_list_begin` | Many parameters removed; `breadcrumb` parameter added |
-| Rendering | Shader texture types | Parameter/return types changed from `Texture2D` to `Texture` |
-| Particles | `.restart()` method | Added optional `keep_seed` parameter (CPU/GPU 2D/3D) |
-| GUI | `RichTextLabel.push_meta` | Added optional `tooltip` parameter |
-| GUI | `GraphEdit.connect_node` | Added optional `keep_alive` parameter |
+### Text & Rendering
+- `Font.find_variation()` — gained optional `palette_index` and `custom_colors` parameters.
+- `Image.save_exr()` / `save_exr_to_buffer()` — gained optional color/linear value parameters.
+- `RenderingServer.particles_request_process_time()` — `time` parameter renamed to `process_time`; gained `process_time_residual`.
+- HDR/SDR output and clearcoat rendering fixes — retest if using HDR output or clearcoat materials.
 
-## 4.2 → 4.3 (In Training Data — LOW RISK)
+### Animation
+- `Animation.length` — type metadata changed from `float` to `double`.
+- `AnimationNodeBlendSpace1D/2D.add_blend_point()` — gained optional `name` parameter.
+- BlendSpace internals changed — projects reading BlendSpace internals directly need to retest blend behavior.
 
-| Subsystem | Change | Details |
-|-----------|--------|---------|
-| Animation | `Skeleton3D.add_bone` returns `int32` | Was `void` |
-| Animation | `bone_pose_updated` signal | Replaced by `skeleton_updated` |
-| TileMap | `TileMapLayer` replaces `TileMap` | One node per layer instead of multi-layer single node |
-| Navigation | `NavigationRegion2D` | Removed `avoidance_layers`, `constrain_avoidance` properties |
-| Editor | `EditorSceneFormatImporterFBX` | Renamed to `EditorSceneFormatImporterFBX2GLTF` |
-| Animation | AnimationMixer base class | AnimationPlayer and AnimationTree now extend AnimationMixer |
+### Physics
+- `PhysicsServer2D.body_set_shape_as_one_way_collision()` — gained optional `direction` parameter.
+- `PhysicsServer2DExtension._body_set_shape_as_one_way_collision()` — gained a **required** `direction` parameter (breaking for any custom physics extension).
+
+### Audio & XR
+- `AudioEffectSpectrumAnalyzer.tap_back_pos` — property **removed**. Audio spectrum visualizer code using this property will break.
+- `OpenXRExtensionWrapper._on_register_metadata()` — gained a **required** `interaction_profile_metadata` parameter.
+- `OpenXRSpatialAnchorCapability.create_new_anchor()` — gained optional `next` parameter.
+
+### Input
+- Keyboard and mouse **device ID numbering scheme changed** — any code that hardcoded device IDs breaks.
+
+### Shaders
+- Shader preprocessor restrictions tightened — some macro patterns that compiled in 4.6 no longer compile in 4.7.
+
+### Platform
+- **OBB Android support removed.** Not relevant if this project targets standard Android export (APK/AAB), but flag if OBB expansion files were ever considered.
+
+### Editor
+- `EditorSceneFormatImporter` — multiple constants moved into the `ImportFlags` enum (`IMPORT_ANIMATION`, `IMPORT_SCENE`, etc.).
+- `EditorVCSInterface._commit()` — gained a **required** `amend` parameter.
+
+## 4.5 → 4.6
+
+Canonical source: [Upgrading from Godot 4.5 to 4.6](https://docs.godotengine.org/en/stable/tutorials/migrating/upgrading_to_godot_4.6.html)
+
+- Jolt Physics became the **default** physics engine (was opt-in in 4.4/4.5).
+- Glow rework — glow-related rendering settings and visuals changed; re-tune glow parameters if used.
+- D3D12 became the default rendering driver on Windows (Vulkan still available).
+- Inverse Kinematics (IK) nodes restored after being reworked — verify any Skeleton IK usage against current API.
+
+## 4.4 → 4.5
+
+Canonical source: [Upgrading from Godot 4.4 to 4.5](https://docs.godotengine.org/en/stable/tutorials/migrating/upgrading_to_godot_4.5.html)
+
+- Accessibility support (AccessKit) introduced — new accessibility-related Control properties.
+- Variadic function arguments added to GDScript.
+- `@abstract` annotation introduced for abstract classes/methods.
+- Shader baker introduced (ahead-of-time shader compilation) — affects shader load/compile workflow.
+- SMAA anti-aliasing option added.
+
+## Pre-4.4 (within LLM training data, ~up to 4.3)
+
+Not covered here — the LLM's training data (cutoff May 2025) should be reasonably
+reliable for 4.3-era and earlier APIs. If in doubt, verify with WebSearch anyway.

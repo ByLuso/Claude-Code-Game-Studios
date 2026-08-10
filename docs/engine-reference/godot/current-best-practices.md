@@ -1,107 +1,77 @@
-# Godot — Current Best Practices
+# Godot Current Best Practices (Since LLM Training Cutoff, May 2025)
 
-Last verified: 2026-02-12 | Engine: Godot 4.6
+*Last verified: 2026-08-10*
 
-Practices that are **new or changed** since the model's training data (~4.3).
-This supplements (not replaces) the agent's built-in knowledge.
+Patterns and features introduced in Godot 4.4–4.7 that the LLM won't know
+to reach for by default. Prefer these over older workarounds when writing
+new GDScript for this project.
 
-## GDScript (4.5+)
+## Mobile & Touch Input (directly relevant — this project targets mobile)
 
-- **Variadic arguments**: Functions can accept arbitrary parameter counts
-  ```gdscript
-  func log_values(prefix: String, values: Variant...) -> void:
-      for v in values:
-          print(prefix, ": ", v)
-  ```
+- **`VirtualJoystick` node (4.7)**: official on-screen touch joystick node.
+  Evaluate this before building a custom touch-drag input system for
+  movement or camera control. Ships as part of the standard node set, not
+  an addon.
+- Godot's mobile export pipeline received general polish in 4.7 (Android
+  workflow improvements). Re-check current export template requirements
+  against the official docs when setting up CI/build, since guidance from
+  before mid-2025 may reference an outdated export template process.
 
-- **Abstract classes and methods**: Use `@abstract` to enforce inheritance
-  ```gdscript
-  @abstract
-  class_name BaseEnemy extends CharacterBody3D
+## GDScript Language
 
-  @abstract
-  func get_attack_pattern() -> Array[Attack]:
-      pass  # Subclasses MUST override
-  ```
+- **Variadic function arguments** (4.5+): use native `...args` style
+  variadic parameters instead of manually overloading functions with
+  optional arguments for "any number of args" cases.
+- **`@abstract` annotation** (4.5+): mark base classes/methods intended to
+  be overridden as `@abstract` instead of relying on comments or `push_error()`
+  convention checks. Gives compile-time enforcement.
+- Continue enforcing **static typing** on all new GDScript per this
+  project's coding standards — this predates the training cutoff but
+  remains the single highest-leverage GDScript practice.
 
-- **Script backtracing**: Detailed call stacks available even in Release builds
+## Physics
 
-## Physics (4.6)
+- **Jolt Physics is the default physics engine as of 4.6** (was opt-in
+  before). Do not assume GodotPhysics2D/3D is active by default — verify
+  project settings if physics behavior seems unexpected, especially for
+  any 3D physics (not the primary concern for this 2D project, but relevant
+  if physics-based UI/feedback is ever added).
 
-- **Jolt Physics is the default 3D engine** for new projects
-  - Better determinism and stability than GodotPhysics3D
-  - Some HingeJoint3D properties (`damp`) only work with GodotPhysics
-  - Switch: Project Settings → Physics → 3D → Physics Engine
-  - 2D physics unchanged (still Godot Physics 2D)
+## Rendering
 
-## Rendering (4.6)
+- **D3D12 is the default rendering driver on Windows as of 4.6** (Vulkan
+  remains available/selectable). Not directly relevant to mobile export,
+  but relevant if a PC build is ever produced for testing.
+- This project is pinned to the **Compatibility (Mobile) renderer** —
+  confirm any suggested rendering API/feature actually exists on the
+  Compatibility renderer, not just on Forward+ (which is desktop-oriented
+  and not this project's target).
+- **Glow rework (4.6)**: if using the Glow post-process effect, current
+  glow parameters/behavior differ from pre-4.6 tutorials — verify against
+  current docs rather than older glow tutorials.
 
-- **D3D12 is the default backend on Windows** (was Vulkan) — for better driver compatibility
-- **Glow now processes before tonemapping** with screen blending mode — existing glow setups may look different
-- **SSR overhauled** — significant improvement in realism, stability, and performance
-- **AgX tonemapper** — new white point and contrast controls
+## UI / Control Nodes
 
-## Rendering (4.5)
+- **Control offset transforms (4.7)**: enables UI "juice" (transform-based
+  animation on Control nodes) without fighting the anchor/layout system.
+  Useful for this project's economy HUD, resource counters, and
+  automation-placement UI feedback. Also changes how some anchored
+  layouts resolve — test menu/HUD layouts after any Control offset
+  transform is applied.
+- Many editor popups/dropdowns now support **dynamic search** (type to
+  filter) — an editor-workflow improvement, not a runtime API change.
 
-- **Shader Baker**: Pre-compile shaders to eliminate startup hitching
-- **SMAA 1x**: New AA option — sharper than FXAA, cheaper than TAA
-- **Stencil buffer**: Available for advanced masking/portal effects
-- **Bent normal maps**: Directional occlusion in normal map textures
-- **Specular occlusion**: Ambient occlusion now affects reflections
+## Accessibility
 
-## Accessibility (4.5+)
+- **AccessKit-based accessibility support** was introduced in 4.5.
+  `accessibility_live` and related Control properties are new since the
+  training cutoff — consult `breaking-changes.md` for the 4.7 type change
+  on `Control.accessibility_live`. Cross-reference with the project's
+  `accessibility-specialist` agent when building UI.
 
-- **Screen reader support**: Control nodes integrate with accessibility tools via AccessKit
-- **Live translation preview**: Test GUI layouts in different languages directly in-editor
-- **FoldableContainer**: New accordion-style UI node for collapsible sections
-- **Recursive Control disable**: Disable mouse/focus interactions for entire node hierarchies with a single property
+## Asset Pipeline
 
-## Animation (4.5+)
-
-- **BoneConstraint3D**: Bind bones to other bones with modifiers
-  - AimModifier3D, CopyTransformModifier3D, ConvertTransformModifier3D
-
-## Animation (4.6)
-
-- **IK system fully restored**: Complete inverse kinematics reintroduced for 3D
-  - Available modifiers: CCDIK, FABRIK, Jacobian IK, Spline IK, TwoBoneIK
-  - Applied via `SkeletonModifier3D` nodes
-
-## Resources (4.5+)
-
-- **`duplicate_deep()`**: Explicit deep duplication for nested resource trees
-  - Old `duplicate()` behavior retained for backward compatibility
-  - Use `duplicate_deep()` when you need per-instance copies of nested resources
-
-## Navigation (4.5+)
-
-- **Dedicated 2D navigation server**: No longer proxied through 3D NavigationServer
-  - Reduces export binary size for 2D-only games
-
-## UI (4.6)
-
-- **Dual-focus system**: Mouse/touch focus is now separate from keyboard/gamepad focus
-  - Visual feedback differs depending on input method
-  - Consider this when designing custom focus behavior
-
-## Editor Workflow (4.6)
-
-- Flexible dock drag-and-drop with blue outline preview (including bottom panel)
-- Most panels support floating windows (except Debugger)
-- New keyboard shortcuts: Alt+O (Output), Alt+S (Shader)
-- Export variable auto-generation: drag resource from FileSystem into script editor
-- Live preview in Quick Open dialog when "Live Preview" enabled
-- New "Select Mode" (v key) prevents accidental transforms; old mode renamed "Transform Mode" (q key)
-
-## Tooling
-
-- **ripgrep has no `gdscript` type**: `*.gd` is registered under `gap` (GAP programming language).
-  `rg --type gdscript` is a hard error — the search never executes.
-  Always use `rg --glob "*.gd"` (shell) or `glob: "*.gd"` (Grep tool) to filter GDScript files.
-
-## Platform (4.5+)
-
-- **visionOS export**: First new platform since open-sourcing (windowed app mode)
-- **SDL3 gamepad driver**: Better cross-platform gamepad support
-- **Android**: Edge-to-edge display, camera feed access, 16KB page support (Android 15+)
-- **Linux**: Wayland subwindow support for multi-window capability
+- Godot's **official asset store** launched in 4.7 and is gradually
+  replacing the older Asset Library. Prefer it when recommending
+  third-party addons, but always verify an addon's actual Godot version
+  compatibility before recommending it for this 4.7.1 project.

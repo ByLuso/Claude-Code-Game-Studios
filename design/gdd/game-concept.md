@@ -1,0 +1,267 @@
+# Game Concept: Rincón Compartido
+
+*Created: 2026-08-10*
+*Status: Draft*
+
+---
+
+## Elevator Pitch
+
+> Es un tycoon de automatización cooperativo en el que dos jugadores, conectados por wifi local, transforman un terreno compartido en una operación de cultivos, madera y minerales — cosechando a mano, construyendo cintas transportadoras y contratando trabajadores, mientras defienden juntos lo construido de plagas, derrumbes e incendios.
+>
+> Test de 10 segundos: "Con tu compañero, convierten un terreno en un imperio de recursos automatizado, y lo protegen juntos cuando la naturaleza ataca." ✅
+
+---
+
+## Core Identity
+
+| Aspect | Detail |
+| ---- | ---- |
+| **Genre** | Tycoon / Automatización cooperativa (Management Sim + Factory Automation) |
+| **Platform** | Móvil (iOS / Android) |
+| **Target Audience** | Ver Target Player Profile |
+| **Player Count** | Co-op local (2 jugadores, wifi local) — ideal en pareja, jugable en solitario |
+| **Session Length** | Sesiones de 30-120 min, con ciclos internos de ~5 min |
+| **Monetización** | Sin definir aún — abierta como pregunta (ver Risks and Open Questions) |
+| **Estimated Scope** | Medium (6–9 meses, desarrollador solo) |
+| **Comparable Titles** | Junkyard Tycoon, My Time at Sandrock, Techtonica |
+
+---
+
+## Core Fantasy
+
+Junto a tu compañero, transforman un terreno abandonado en un imperio de recursos que crece y se automatiza bajo su cuidado conjunto. La fantasía central es pasar de "recolectores manuales" a "arquitectos de un sistema que casi se sostiene solo" — mientras protegen juntos lo construido de las amenazas periódicas que el mundo les lanza (plagas, derrumbes, incendios).
+
+No es la fantasía de dominar en solitario un imperio: es la fantasía de **construir algo juntos que ninguno de los dos podría sostener igual de bien solo**.
+
+---
+
+## Unique Hook
+
+Como Junkyard Tycoon, Y ADEMÁS diseñado desde cero para que dos personas compartan una sola economía en vivo vía wifi local, enfrentando amenazas periódicas (plagas, derrumbes, incendios) que se resuelven con inversión preventiva y gestión conjunta — nunca con combate directo.
+
+La interdependencia económica real entre los dos jugadores (una sola cuenta, un solo terreno) es lo que distingue esto de un tycoon con "modo cooperativo" añadido encima: el co-op está en el ADN del diseño, no es una capa social opcional.
+
+---
+
+## Player Experience Analysis (MDA Framework)
+
+### Target Aesthetics (What the player FEELS)
+
+| Aesthetic | Priority | How We Deliver It |
+| ---- | ---- | ---- |
+| **Sensation** (sensory pleasure) | 5 | Feedback rápido e inmediato al cosechar (partículas, sonido, contador subiendo) |
+| **Fantasy** (make-believe, role-playing) | 7 | Mínima — "somos dueños de un negocio que crece juntos" |
+| **Narrative** (drama, story arc) | N/A | Sin narrativa dirigida; el juego es sistémico, no narrativo |
+| **Challenge** (obstacle course, mastery) | 1 | Curva de automatización, eventos de amenaza que ponen a prueba el sistema, métricas de eficiencia visibles |
+| **Fellowship** (social connection) | 2 | Cuenta y terreno compartidos, decisiones de inversión conjuntas, roles flexibles |
+| **Discovery** (exploration, secrets) | 3 | Nuevos tipos de recursos y piezas de automatización desbloqueables |
+| **Expression** (self-expression, creativity) | 4 | Libertad de diseño en la disposición de cintas, parcelas y trabajadores |
+| **Submission** (relaxation, comfort zone) | 6 | Loop manual rítmico y relajante entre picos de tensión por amenazas |
+
+### Key Dynamics (Emergent player behaviors)
+
+- Los jugadores tenderán a especializarse de forma natural (uno construye/automatiza, otro cosecha/vende) aunque los roles sean intercambiables sesión a sesión.
+- Negociarán activamente en qué invertir primero: crecimiento (más cintas, más terreno) vs. protección (defensas contra amenazas).
+- Cuando llega una amenaza, coordinarán una respuesta de emergencia en tiempo real — quién repara, quién sigue produciendo.
+
+### Core Mechanics (Systems we build)
+
+1. Recolección manual rápida y fluida de 3 tipos de recursos base (cultivos, madera, minerales)
+2. Automatización mediante cintas transportadoras y trabajadores contratables, colocados en una cuadrícula 2D/isométrica
+3. Economía compartida (una sola cuenta bancaria) con venta de recursos
+4. Eventos de amenaza periódicos (plagas, derrumbes, incendios) prevenibles con protecciones compradas o resolubles con gestión reactiva
+5. Progresión de automatización que desbloquea nuevos tipos de recursos y piezas
+
+---
+
+## Player Motivation Profile
+
+### Primary Psychological Needs Served
+
+| Need | How This Game Satisfies It | Strength |
+| ---- | ---- | ---- |
+| **Autonomy** (freedom, meaningful choice) | Roles no fijos — cada sesión, ambos jugadores deciden quién cosecha a mano y quién gestiona automatización | Core |
+| **Competence** (mastery, skill growth) | Métricas visibles de eficiencia (unidades/min, % automatizado) muestran el crecimiento de habilidad y sistema | Core |
+| **Relatedness** (connection, belonging) | Cuenta y terreno compartidos; el progreso de uno depende directamente de las decisiones del otro | Core |
+
+### Player Type Appeal (Bartle Taxonomy)
+
+- [x] **Achievers** (goal completion, collection, progression) — How: automatización creciente y crecimiento visible del negocio compartido
+- [x] **Explorers** (discovery, understanding systems, finding secrets) — How: descubrir nuevos recursos y piezas de automatización
+- [x] **Socializers** (relationships, cooperation, community) — How: co-op local con interdependencia económica real, no cosmética
+- [ ] **Killers/Competitors** (domination, PvP, leaderboards) — No aplica (anti-pilar: sin PvP)
+
+### Flow State Design
+
+- **Onboarding curve**: los primeros 10 minutos enseñan la recolección manual de un solo recurso, luego introducen la primera pieza de automatización.
+- **Difficulty scaling**: las amenazas aumentan en frecuencia y variedad conforme crece la operación.
+- **Feedback clarity**: un contador de eficiencia (% automatizado, unidades/min) siempre visible en pantalla.
+- **Recovery from failure**: una amenaza daña la operación temporalmente, nunca la arruina — reparar es rápido y educativo, no punitivo.
+
+---
+
+## Core Loop
+
+### Moment-to-Moment (30 seconds)
+Cosechar/talar/minar a mano con acciones rápidas y fluidas, encadenables entre tipos de recurso, con feedback inmediato (sonido, partícula, contador) en cada acción.
+
+### Short-Term (5-15 minutes)
+Cosechar manualmente lo justo → juntar capital → invertir en la siguiente pieza de automatización (cinta, máquina o trabajador) → repetir con el siguiente tipo de recurso. El "one more" viene de estar cerca de poder pagar la próxima pieza que conecta el sistema.
+
+### Session-Level (30-120 minutes)
+Expandir la operación (nuevas cintas, nueva pieza, nuevo trabajador) + gestionar un evento de amenaza (reaccionar o ya estar protegidos) + revisar cuánto del negocio corre ya de forma autónoma. Punto de corte natural: cuando la nueva pieza de automatización queda instalada y funcionando.
+
+### Long-Term Progression
+De parcela pequeña y 100% manual → operación mixta → negocio mayormente automatizado con nuevos tipos de recursos desbloqueados. Sin final duro: el jugador decide cuándo su imperio está "completo" a su gusto.
+
+### Retention Hooks
+- **Curiosity**: la siguiente pieza de automatización o tipo de recurso por desbloquear.
+- **Investment**: la operación compartida que ambos construyeron — perderla ante una amenaza no gestionada duele.
+- **Social**: la sesión solo tiene sentido completo con la otra persona conectada.
+- **Mastery**: el porcentaje de automatización y la eficiencia del sistema como métrica de dominio.
+
+---
+
+## Game Pillars
+
+### Pillar 1: Compartido, no dividido
+El progreso pertenece a los dos: terreno compartido, cuenta compartida, decisiones conjuntas.
+
+*Design test*: Si dudamos entre una feature que separa a los jugadores en economías paralelas o una que los mantiene interdependientes, elegimos la interdependencia.
+
+### Pillar 2: Manual siempre vale la pena
+Nunca dejamos que la automatización reemplace del todo la diversión — siempre debe existir algo que premie hacerlo a mano.
+
+*Design test*: Si dudamos entre que la automatización sustituya por completo una acción o que la versión manual siga pagando mejor / dando más calidad, elegimos mantener la manual relevante.
+
+### Pillar 3: Fricción cero, decisión sí
+La ejecución (moverse, cosechar, construir) se siente rápida y sin estorbos; la tensión real viene de las decisiones económicas y de gestión, no de pelear con los controles — incluyendo cómo se resuelven las amenazas.
+
+*Design test*: Si dudamos entre añadir complejidad a la ejecución física/de combate o a la capa de gestión/decisión, elegimos la capa de decisión.
+
+### Pillar 4: Crecimiento visible
+El jugador siempre debe poder VER el crecimiento en el mundo — más cintas, más trabajadores, más terreno transformado — no solo un número en un menú.
+
+*Design test*: Si una mejora no se puede representar físicamente en el terreno, buscamos la forma de que sí se vea.
+
+### Pillar 5: El riesgo empuja a prepararse
+Amenazas periódicas (plagas, derrumbes, incendios) ponen a prueba la operación; se enfrentan con inversión preventiva (comprar protecciones) o reacción de gestión (reparar, reasignar), nunca con combate directo.
+
+*Design test*: Si dudamos entre resolver una amenaza con una mecánica de acción/combate o con una decisión de inversión/gestión, elegimos la gestión.
+
+### Anti-Pillars (What This Game Is NOT)
+
+- **NO combate directo ni armas**: las amenazas se resuelven gestionando (comprando protección, reparando, reasignando), no peleando — comprometería el Pilar 3 y 5.
+- **NO modo competitivo/PvP entre los dos jugadores**: comprometería el Pilar 1 (Compartido, no dividido).
+- **NO automatización 100% desatendida** ("déjalo correr y hazte rico sin jugar"): comprometería el Pilar 2 — las amenazas son parte de por qué siempre conviene seguir prestando atención.
+- **NO micromanagement de decenas de unidades individuales estilo RTS**: comprometería el Pilar 3 y el alcance viable para un primer juego.
+
+---
+
+## Inspiration and References
+
+| Reference | What We Take From It | What We Do Differently | Why It Matters |
+| ---- | ---- | ---- | ---- |
+| Junkyard Tycoon | Vista 2D/isométrica, sensación de "chatarra a imperio" | Añadimos co-op local real (no solo single-player) y amenazas de gestión periódicas | Valida que el género tycoon 2D top-down es viable y atractivo en móvil |
+| My Time at Sandrock | Economía + co-op | Nuestro foco es automatización pura (cintas/trabajadores), no crafting narrativo | Valida demanda real de economía cooperativa |
+| Techtonica | Automatización + co-op | Simplificamos la complejidad de fábrica para un formato móvil/casual | Valida demanda de automatización jugada en compañía |
+
+**Non-game inspirations**: La sensación de "montar un negocio familiar" (ferretería, huerto, taller) donde cada quien tiene su rol pero comparten la caja registradora.
+
+---
+
+## Target Player Profile
+
+| Attribute | Detail |
+| ---- | ---- |
+| **Age range** | 16-35 |
+| **Gaming experience** | Casual a Mid-core |
+| **Time availability** | Sesiones de 15-60 min, normalmente jugadas junto a una pareja/amigo en la misma red wifi |
+| **Platform preference** | Móvil |
+| **Current games they play** | Junkyard Tycoon, Stardew Valley, Township, Two Point County |
+| **What they're looking for** | La satisfacción de un tycoon de gestión, pero compartida con otra persona en tiempo real |
+| **What would turn them away** | Controles táctiles torpes, exigir internet en vez de solo wifi local, sesiones que necesiten más de una hora para sentir progreso |
+
+---
+
+## Technical Considerations
+
+| Consideration | Assessment |
+| ---- | ---- |
+| **Recommended Engine** | Sin definir — el usuario no tiene preferencia; ejecutar `/setup-engine` considerando 2D, móvil, networking local y co-op |
+| **Key Technical Challenges** | Sincronizar estado económico compartido en tiempo real vía wifi local entre 2 dispositivos móviles; colocación de cintas transportadoras en cuadrícula táctil; balancear frecuencia de amenazas vs. progreso de automatización |
+| **Art Style** | 2D top-down / isométrico estilizado (estilo Junkyard Tycoon) |
+| **Art Pipeline Complexity** | Low-Medium (2D custom) |
+| **Audio Needs** | Moderate (feedback de cosecha, alertas de amenaza, música ambiental relajante) |
+| **Networking** | P2P local (wifi) — sin servidores dedicados en el MVP |
+| **Content Volume** | MVP: 3 tipos de recurso base, 1 amenaza por tipo, automatización básica. Visión completa: recursos "exóticos" adicionales, tech tree extenso |
+| **Procedural Systems** | Ninguno confirmado — posible generación aleatoria de amenazas (tipo, timing), no de terreno |
+
+---
+
+## Risks and Open Questions
+
+### Design Risks
+- El balance entre "recolectar a mano siempre vale la pena" y el atractivo de automatizar podría inclinarse hacia un extremo y romper el Pilar 2.
+- Las amenazas podrían sentirse injustas o frustrantes si no se comunican con suficiente anticipación antes de golpear.
+
+### Technical Risks
+- Sincronización de estado compartido (economía, inventario, posiciones) entre 2 dispositivos móviles vía wifi local en tiempo real.
+- Rendimiento de la simulación de automatización (muchas cintas/trabajadores activos) en hardware móvil de gama media/baja.
+
+### Market Risks
+- El género tycoon móvil está dominado por juegos F2P con monetización agresiva; posicionar este juego con otro modelo puede ser un reto de descubribilidad.
+- El co-op local (2 dispositivos, misma wifi) es un modelo más difícil de descubrir/promocionar que el single-player estándar.
+
+### Scope Risks
+- Incluso el MVP definido (networking local + automatización + amenazas) implica varios sistemas interdependientes no triviales para un primer juego en solitario.
+- El diseño de UI táctil para gestión (paneles de economía, colocación de piezas) puede requerir más iteración de la anticipada.
+
+### Open Questions
+- ¿Qué modelo de monetización tendrá el juego (pago único, F2P, aún sin decidir)? — Resolver antes de `/create-architecture`.
+- ¿Es viable el networking wifi local en el motor elegido sin librerías de terceros complejas? — Resolver durante `/setup-engine` y con un prototipo técnico temprano.
+- ¿Cómo funciona mecánicamente el "modo solo" (un jugador controla ambos roles, o se simplifica el loop)? — Resolver en `/map-systems` o un `/design-system` dedicado.
+
+---
+
+## MVP Definition
+
+**Core hypothesis**: Dos jugadores en la misma red wifi local encuentran satisfactorio cosechar manualmente y automatizar progresivamente una operación compartida de 3 recursos, incluso cuando una amenaza periódica los obliga a reaccionar juntos.
+
+**Required for MVP**:
+1. 1 parcela compartida con 3 tipos de recurso base (cultivo, árbol, mineral) recolectables a mano
+2. 1 pieza de automatización por recurso (cinta transportadora O trabajador, no ambos aún)
+3. Cuenta bancaria compartida y venta de recursos
+4. 1 evento de amenaza recurrente reactivo (ej. plaga en el cultivo) — sin protección comprable todavía
+5. Conexión wifi local funcional y confiable entre 2 dispositivos
+
+**Explicitly NOT in MVP** (defer to later):
+- Compra de protecciones contra amenazas (se agrega tras validar que el loop base es divertido)
+- Múltiples parcelas o expansión de terreno
+- Variedad completa de recursos, incluidos los "exóticos"
+- Eventos de mercado con fluctuación de precios
+- Tech tree extenso de automatización
+
+### Scope Tiers (if budget/time shrinks)
+
+| Tier | Content | Features | Timeline |
+| ---- | ---- | ---- | ---- |
+| **MVP** | 1 parcela, 3 recursos base | Cosecha manual + automatización parcial (1 tipo) + 1 amenaza reactiva + wifi local | 4-8 semanas |
+| **Vertical Slice** | 1 parcela completa | + compra de protecciones, cintas y trabajadores combinados | 2-3 meses |
+| **Alpha** | Todas las parcelas/recursos, sin pulir | Todas las features de la visión completa, en bruto | 4-6 meses |
+| **Full Vision** | Contenido completo, pulido | Tech tree completo, eventos de mercado, variedad de amenazas, arte pulido | 6-9 meses |
+
+---
+
+## Next Steps
+
+- [ ] Get concept approval from creative-director
+- [ ] Run `/setup-engine` — configurar el motor considerando 2D, móvil, networking local y co-op
+- [ ] Run `/prototype` sobre el mecanismo más riesgoso: networking local + economía compartida en tiempo real
+- [ ] Si el prototipo PROCEDE: `/art-bible` antes de escribir cualquier GDD
+- [ ] Decompose concept into systems (`/map-systems`)
+- [ ] Design each system (`/design-system [system-name]`) — usar aprendizajes del prototipo en Tuning Knobs y Formulas
+- [ ] Build vertical slice in Pre-Production (`/vertical-slice`) — validar el loop completo antes de comprometerse a Producción
+- [ ] Validate core loop with playtest (`/playtest-report`)
+- [ ] Plan first milestone (`/sprint-plan new`)

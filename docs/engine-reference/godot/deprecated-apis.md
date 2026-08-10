@@ -1,43 +1,33 @@
-# Godot — Deprecated APIs
+# Godot Deprecated / Renamed APIs (Post-4.3 → 4.7.1)
 
-Last verified: 2026-02-12
+*Last verified: 2026-08-10*
 
-If an agent suggests any API in the "Deprecated" column, it MUST be replaced
-with the "Use Instead" column.
+"Don't use X → Use Y" reference. Check this before suggesting any of the
+left-hand-column APIs in generated GDScript.
 
-## Nodes & Classes
+| Don't Use (old / removed) | Use Instead | Since | Notes |
+|---|---|---|---|
+| `AudioEffectSpectrumAnalyzer.tap_back_pos` | (property removed — rework audio spectrum visualizer code without it) | 4.7 | Property was removed entirely, not renamed |
+| `RichTextLabel` `width_in_percent` / `height_in_percent` params on `add_image()`/`update_image()` | `width_unit` / `height_unit` (float) | 4.7 | Type changed from implicit percent flag to float unit |
+| `RichTextLabel.ImageUpdateMask.UPDATE_WIDTH_IN_PERCENT` | `UPDATE_WIDTH_UNIT` | 4.7 | Enum constant renamed |
+| Hardcoded keyboard/mouse device IDs | Re-derive device IDs at runtime — numbering scheme changed | 4.7 | Do not assume device ID 0/1 stability across versions |
+| `Object.is_class(String)` | `Object.is_class(StringName)` | 4.7 | Parameter type changed; passing a plain String still auto-converts in GDScript but prefer StringName explicitly |
+| OBB expansion files (Android) | Standard AAB/APK asset packaging | 4.7 | OBB support removed |
+| Opt-in Jolt Physics enable flag | Jolt is default; explicitly select GodotPhysics2D/3D if the old physics engine is required | 4.6 | Default engine changed, old default is now the non-default option |
+| Old EditorSceneFormatImporter top-level import flag constants | `EditorSceneFormatImporter.ImportFlags.*` | 4.7 | Constants moved into nested enum |
 
-| Deprecated | Use Instead | Since | Notes |
-|------------|-------------|-------|-------|
-| `TileMap` | `TileMapLayer` | 4.3 | One node per layer instead of multi-layer node |
-| `VisibilityNotifier2D` | `VisibleOnScreenNotifier2D` | 4.0 | Renamed for clarity |
-| `VisibilityNotifier3D` | `VisibleOnScreenNotifier3D` | 4.0 | Renamed for clarity |
-| `YSort` | `Node2D.y_sort_enabled` | 4.0 | Property on Node2D, not a separate node |
-| `Navigation2D` / `Navigation3D` | `NavigationServer2D` / `NavigationServer3D` | 4.0 | Server-based API |
-| `EditorSceneFormatImporterFBX` | `EditorSceneFormatImporterFBX2GLTF` | 4.3 | Renamed |
+## GDScript language features to prefer going forward (not deprecations, but post-cutoff additions)
 
-## Methods & Properties
+| Old pattern | Prefer since | Why |
+|---|---|---|
+| Fixed-arity helper functions/overload workarounds | Variadic function arguments | 4.5 | Native variadic args reduce boilerplate |
+| Duck-typed "abstract" base classes (convention only) | `@abstract` annotation | 4.5 | Enforces the contract at compile time instead of by convention |
+| Custom on-screen touch controls built from scratch | `VirtualJoystick` node | 4.7 | Official, tested mobile touch input — evaluate before building custom joystick UI for this project |
 
-| Deprecated | Use Instead | Since | Notes |
-|------------|-------------|-------|-------|
-| `yield()` | `await signal` | 4.0 | GDScript 2.0 coroutine syntax |
-| `connect("signal", obj, "method")` | `signal.connect(callable)` | 4.0 | Callable-based connections |
-| `instance()` | `instantiate()` | 4.0 | Renamed |
-| `PackedScene.instance()` | `PackedScene.instantiate()` | 4.0 | Renamed |
-| `get_world()` | `get_world_3d()` | 4.0 | Explicit 2D/3D split |
-| `OS.get_ticks_msec()` | `Time.get_ticks_msec()` | 4.0 | Time singleton preferred |
-| `duplicate()` for nested resources | `duplicate_deep()` | 4.5 | Explicit deep copy control |
-| `Skeleton3D` signal `bone_pose_updated` | `skeleton_updated` | 4.3 | Renamed |
-| `AnimationPlayer.method_call_mode` | `AnimationMixer.callback_mode_method` | 4.3 | Moved to base class |
-| `AnimationPlayer.playback_active` | `AnimationMixer.active` | 4.3 | Moved to base class |
+## Verification protocol
 
-## Patterns (Not Just APIs)
-
-| Deprecated Pattern | Use Instead | Why |
-|--------------------|-------------|-----|
-| String-based `connect()` | Typed signal connections | Type-safe, refactor-friendly |
-| `$NodePath` in `_process()` | `@onready var` cached reference | Performance: path lookup every frame |
-| Untyped `Array` / `Dictionary` | `Array[Type]`, typed variables | GDScript compiler optimizations |
-| `Texture2D` in shader parameters | `Texture` base type | Changed in 4.4 |
-| Manual post-process viewport chains | `Compositor` + `CompositorEffect` | Structured post-processing (4.3+) |
-| GodotPhysics3D for new projects | Jolt Physics 3D | Default since 4.6; better stability |
+Before generating GDScript that calls an unfamiliar or infrequently-used
+engine API:
+1. Check this file and `breaking-changes.md` first.
+2. If the API isn't listed and you're uncertain it exists in 4.7.1, use
+   WebSearch against `docs.godotengine.org` before writing the call.

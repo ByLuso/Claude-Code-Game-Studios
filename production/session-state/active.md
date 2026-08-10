@@ -2,10 +2,9 @@
 
 ## Current Task
 `/design-review design/gdd/farm-economy-system.md` — round 4 (lean/narrow
-verification pass, no subagents, this session) completed and fixes applied
-in-place (not yet committed — see Files Modified below). Verdict: NEEDS
-REVISION → 2 real blockers found, both survived round 3's own
-propagation-failure audit, both fixed this session:
+verification pass, no subagents) completed, fixes applied, and committed
+(`233265a`). Verdict: NEEDS REVISION → 2 real blockers found, both survived
+round 3's own propagation-failure audit, both fixed:
 1. The anti-softlock floor (5.10, AC 3d) only made *repair* free, not the
    reseed that repair always requires (always ends in Vacía) — a pot stuck
    at $0 after a free repair still couldn't afford even the cheapest seed
@@ -27,11 +26,12 @@ eligibility that the document's own silo-lleno exception (3.5, Apéndice
 D.1) contradicts — corrected to a one-directional implication.
 Documented as Apéndice C4, following the same pattern as C/C2/C3.
 
-**Next action**: commit these round-4 fixes, then decide whether a round-5
-verification pass is warranted (round 4 was itself lean/solo, no
-specialists — could go either lean again or ask the user) or move on to the
-other open items (performance-spike scope gap, `game-concept.md` round-4,
-the two blocking technical spikes).
+**Next action**: the design-review skill's Phase 5 closing widget was owed
+after applying round 4's fixes (skipped mid-flow last turn — went straight
+into edits). Presenting it now via `AskUserQuestion`, then acting on
+whichever path it resolves to (recommended default if unattended, per this
+session's established convention: proceed with the "(Recommended)" option
+rather than stalling).
 
 ## Farm Economy System — Status Summary (2026-08-10, after 3 rounds + this session's edits)
 The GDD (`design/gdd/farm-economy-system.md`, ~1300 lines) is now a mature,
@@ -90,12 +90,13 @@ close that loop, but not currently on the critical path.
 - [x] `farm-economy-system.md` round 3 `/design-review` (NEEDS REVISION —
       found round 2's fixes were superficial) — resolved with propagation
       fix + Apéndice D verifiable artifacts (commit 3e00a12)
-- [ ] **`farm-economy-system.md` round 4 — narrow verification pass** (next
-      action, see Current Task above)
-- [ ] After round 4 clears (APPROVED or advisory-only CONCERNS): the
-      performance-spike scope gap (Apéndice A #11) needs a decision before
-      `/map-systems` — either expand the existing `game-concept.md` spike or
-      schedule a dedicated one for this document's content
+- [x] `farm-economy-system.md` round 4 — narrow verification pass (NEEDS
+      REVISION, 2 real blockers found in round 3's own "closed" guarantees)
+      — resolved (commit 233265a); Phase 5 closing widget pending this turn
+- [ ] Performance-spike scope gap (Apéndice A #11 in the GDD) needs a
+      decision before `/map-systems` — either expand the existing
+      `game-concept.md` spike or schedule a dedicated one for this
+      document's content
 - [ ] Networking spike, touch-UX spike (both bloqueantes antes de
       `/create-architecture`, per `game-concept.md` Next Steps)
 - [ ] `/design-system [system]` per system, then `/create-architecture`
@@ -120,10 +121,14 @@ close that loop, but not currently on the critical path.
   round 3 did, not just add a paragraph where the problem was found.
 
 ## Files Modified This Session
-- `production/session-state/active.md` — this file (brought up to date;
-  no other files changed this turn)
+- `design/gdd/farm-economy-system.md` — round 4 verification fixes
+  (committed `233265a`)
+- `production/session-state/active.md` — this file, brought back in sync
+  with the actual git history (was inconsistent: top said round 4 done,
+  checklist/bottom still said pre-round-4 and "not yet committed" when a
+  commit already existed)
 
 ## Current Phase
-Post round-3-fix, pre round-4-verification, for `farm-economy-system.md`.
-Next action: run `/design-review design/gdd/farm-economy-system.md` as a
-narrow verification pass.
+Round 4 done and committed for `farm-economy-system.md`. Closing out the
+design-review skill's Phase 5 (post-revision widget, owed since fixes were
+applied without returning to it) this turn, then proceeding per its answer.

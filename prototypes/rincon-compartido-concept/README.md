@@ -56,6 +56,10 @@ este prototipo.
   $10 para **reparar/replantar**.
 - El dinero y el silo son compartidos entre los dos jugadores — todas las
   decisiones de gasto afectan a ambos.
+- Abajo del HUD hay un **panel de estadísticas** que muestra cuánto cosechó
+  y cuánto gastó cada jugador individualmente (J1 vs J2) — el dinero sigue
+  siendo 100% compartido y de gasto libre, esto es solo visibilidad, no una
+  restricción.
 
 ## Qué observar durante el playtest
 

@@ -36,18 +36,18 @@ func _process(delta: float) -> void:
 			if _timer <= 0.0:
 				_resolve_and_reset()
 
-func try_protect() -> bool:
+func try_protect(player_id: int) -> bool:
 	if state != State.WARNING:
 		return false
-	if Economy.spend(PROTECTION_COST):
+	if Economy.spend(PROTECTION_COST, player_id):
 		_resolve_and_reset()
 		return true
 	return false
 
-func try_repair() -> bool:
+func try_repair(player_id: int) -> bool:
 	if state != State.ACTIVE:
 		return false
-	if Economy.spend(REPAIR_COST):
+	if Economy.spend(REPAIR_COST, player_id):
 		_resolve_and_reset()
 		return true
 	return false

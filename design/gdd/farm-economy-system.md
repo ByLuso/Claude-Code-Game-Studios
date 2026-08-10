@@ -1,7 +1,7 @@
 # System GDD: Farm Economy — Cultivos, Terreno, Máquinas e Infraestructura
 
 *Created: 2026-08-10*
-*Status: Draft — revisado tras cuatro rondas de `/design-review` (2026-08-10). Ronda 1: veredicto MAJOR REVISION NEEDED, 8 especialistas + síntesis de creative-director, bloqueantes resueltos. Ronda 2 (mismo día, re-revisión): veredicto NEEDS REVISION, 5 bloqueantes adicionales resueltos. Ronda 3 (mismo día, re-revisión): veredicto NEEDS REVISION — el hallazgo principal de la síntesis fue que los 5 bloqueantes "resueltos" en ronda 2 tenían defectos vivos en ronda 3 porque los parches se insertaron localmente sin propagarse por Formulas/Edge Cases/Acceptance Criteria; esta ronda corrige eso y añade el Apéndice D (matriz de estado×acción×elegibilidad, tabla de EV del Pilar 5, matriz de cobertura de AC) como los tres artefactos verificables que la síntesis exigió antes de dar por cerrada la revisión. Ronda 4 (mismo día, pasada de verificación acotada, sin especialistas — confirmar que la ronda 3 se sostiene): encontró 2 bloqueantes reales que sobrevivieron a la propia auditoría de propagación de ronda 3 — el piso anti-softlock (5.10, AC 3d) no cubría el costo de resiembra tras una reparación gratuita (deadlock real alcanzable), y el cap de concurrencia de Fresa (3.2, 5.12) no contaba el estado Descansando, dejando abierta una vía de intercalado distinta a la que ronda 3 cerró. Ambos corregidos. Ver Apéndice C, C2, C3 y C4 para el registro completo de decisiones de las cuatro rondas. Tier: contenido MVP-adyacente / Vertical Slice — NO es contenido de MVP (ver Scope Tiers de `game-concept.md`).*
+*Status: Draft — revisado tras cinco rondas de `/design-review` (2026-08-10). Ronda 1: veredicto MAJOR REVISION NEEDED, 8 especialistas + síntesis de creative-director, bloqueantes resueltos. Ronda 2 (mismo día, re-revisión): veredicto NEEDS REVISION, 5 bloqueantes adicionales resueltos. Ronda 3 (mismo día, re-revisión): veredicto NEEDS REVISION — el hallazgo principal de la síntesis fue que los 5 bloqueantes "resueltos" en ronda 2 tenían defectos vivos en ronda 3 porque los parches se insertaron localmente sin propagarse por Formulas/Edge Cases/Acceptance Criteria; esta ronda corrige eso y añade el Apéndice D (matriz de estado×acción×elegibilidad, tabla de EV del Pilar 5, matriz de cobertura de AC) como los tres artefactos verificables que la síntesis exigió antes de dar por cerrada la revisión. Ronda 4 (mismo día, pasada de verificación acotada, sin especialistas): encontró 2 bloqueantes reales que sobrevivieron a la propia auditoría de propagación de ronda 3 — el piso anti-softlock (5.10, AC 3d) no cubría el costo de resiembra tras una reparación gratuita, y el cap de concurrencia de Fresa (3.2, 5.12) no contaba el estado Descansando. Ambos corregidos. Ronda 5 (mismo día, pasada de verificación acotada sobre los fixes de ronda 4): encontró que la corrección del piso anti-softlock de ronda 4 seguía atada a un historial causal específico ("vino de una reparación gratuita") en vez de al estado de la granja, dejando sin cubrir el mismo deadlock alcanzado por una secuencia de reparaciones pagadas. Generalizado a una condición puramente de estado. Ver Apéndice C, C2, C3, C4 y C5 para el registro completo de decisiones de las cinco rondas. Tier: contenido MVP-adyacente / Vertical Slice — NO es contenido de MVP (ver Scope Tiers de `game-concept.md`).*
 *Origen: Sesión de diseño con ENGRANAJE (arquitecto de mecánicas), a partir de la hipótesis confirmada
 en `prototypes/rincon-compartido-concept/REPORT.md` (Concept Prototype Report — Economía Compartida + Amenazas)*
 *Propósito: especificación de sistemas lista para pasar a un agente de código que va a ampliar el
@@ -695,15 +695,27 @@ detalle y la recomendación.
    ningún cultivo Creciendo/Lista, el pozo nunca puede volver a subir de $0, y el "piso" tal como se
    escribió en ronda 3 solo cubre el paso de reparar, no el paso de replantar que la propia reparación
    exige para volver a producir ingreso. Es un segundo deadlock, alcanzable inmediatamente después de
-   que el primer piso se activa. **Se extiende el piso**: bajo la misma condición de activación (pozo
-   en $0 o por debajo del costo relevante, y ninguna parcela Creciendo/Lista) aplicada ahora también
-   al **plantar sobre una parcela Vacía que quedó así por una reparación gratuita reciente** — ese
-   primer intento de plantar Trigo (el cultivo más barato, siempre desbloqueado desde el inicio) tras
-   una reparación gratuita se ejecuta igualmente gratis si el pozo sigue sin saldo suficiente en ese
-   momento. El piso, en conjunto, garantiza una cadena completa reparar-gratis → replantar-gratis que
-   siempre logra devolver al menos una parcela a un estado productivo (Creciendo) sin depender de que
-   el pozo tenga saldo en ningún punto de la cadena — es la única forma de que la garantía de
-   no-deadlock del Pilar 5 se sostenga de verdad. Ver AC 3d.
+   que el primer piso se activa.
+
+   **Corrección de ronda 5 (defecto encontrado en la ronda 5 de `/design-review` — la primera
+   corrección de ronda 4 seguía sin cerrar el deadlock en todos los casos)**: la extensión de ronda 4
+   ataba la resiembra gratis a que la parcela Vacía viniera específicamente de *una reparación
+   gratuita reciente* — una condición de historial causal, no de estado. Eso deja abierto un camino:
+   si el jugador va pagando reparaciones normales (no gratuitas) mientras todavía tiene saldo, y el
+   pozo llega exactamente a $0 justo cuando la *última* parcela termina esa reparación *pagada* (no
+   gratuita), esa parcela queda Vacía sin haber activado nunca el piso — y la extensión de ronda 4,
+   atada al historial de "vino de una reparación gratuita", no la cubre. Es el mismo deadlock de
+   fondo, alcanzado por una secuencia distinta. **Se generaliza el piso a una condición puramente de
+   estado, no de historial**: mientras el pozo compartido esté en $0 (o por debajo del costo de Trigo,
+   $2) **y** ninguna parcela de la granja esté en Creciendo o Lista, el siguiente intento de plantar
+   Trigo en **cualquier** parcela Vacía de la granja —sin importar cómo llegó a ese estado: reparación
+   gratuita, reparación pagada, o cualquier otra vía— se ejecuta gratis. Esta versión es más simple
+   que la de ronda 4 y cierra el hueco: ya no importa la historia de la parcela, solo el estado actual
+   de la granja completa. El piso, en conjunto (reparación condicionada al estado + resiembra
+   condicionada al estado), garantiza que siempre exista una acción disponible sin costo que devuelva
+   al menos una parcela a un estado productivo (Creciendo) cuando el pozo y el estado de la granja
+   cumplen la condición límite — es la única forma de que la garantía de no-deadlock del Pilar 5 se
+   sostenga en todos los casos, no solo en el más común. Ver AC 3d.
 
 5.11. **(Nuevo en ronda 3 de `/design-review`) Downtime de reparación (Reparando)**: tras tocar una
    parcela Marchita o Dañada para repararla, la parcela entra en estado Reparando (4.0s Marchita /
@@ -918,18 +930,21 @@ detalle y la recomendación.
    downtime, la parcela pasa a Vacía (no a Creciendo/Lista — requiere replantar y pagar semilla de
    nuevo).
 3d. **(nuevo en ronda 3 — piso anti-softlock del Pilar 5, antes no implementado en este documento;
-   ampliado en ronda 4 — la versión de ronda 3 no cerraba el deadlock completo, ver Edge Case 5.10)**
+   ampliado en ronda 4 y generalizado en ronda 5 — ver Edge Case 5.10 para el historial completo)**
    Dado un pozo compartido en $0 y todas las parcelas de la granja en Marchita, Dañada o Reparando
    (ninguna Creciendo/Lista), la siguiente reparación que el jugador intente se ejecuta gratis (sin
    descontar el costo). Dado el mismo pozo en $0 pero con al menos una parcela Creciendo o Lista
    (una vía de ingreso disponible), la reparación NO se ejecuta gratis — el piso solo se activa en el
-   caso límite sin ninguna vía de ingreso restante. **Continuación (nueva en ronda 4)**: dada la
-   parcela que acaba de quedar Vacía por esa reparación gratuita, y el pozo compartido todavía sin
-   saldo suficiente para comprar semilla de Trigo ($2) en ese momento, el siguiente intento de
-   plantar Trigo en esa parcela también se ejecuta gratis (sin descontar el costo de semilla). Dado
-   el mismo escenario pero con el pozo ya con $2 o más disponibles, plantar Trigo cobra el costo
-   normal — el piso extendido solo se activa mientras la cadena reparar→replantar no tenga, en ningún
-   punto, una fuente de ingreso alternativa disponible.
+   caso límite sin ninguna vía de ingreso restante. **Continuación (generalizada en ronda 5 — la
+   versión de ronda 4 solo cubría la parcela que viniera de una reparación gratuita, dejando sin
+   cubrir el mismo deadlock alcanzado vía reparaciones pagadas, ver Edge Case 5.10)**: dado el pozo
+   compartido en $0 (o por debajo de $2) y ninguna parcela de la granja en Creciendo o Lista, el
+   siguiente intento de plantar Trigo en **cualquier** parcela Vacía de la granja se ejecuta gratis,
+   sin importar si esa parcela llegó a Vacía por una reparación gratuita, una reparación pagada, o
+   cualquier otra vía. Dado el mismo escenario pero con el pozo ya con $2 o más disponibles, o con al
+   menos una parcela Creciendo/Lista, plantar Trigo cobra el costo normal — el piso extendido solo se
+   activa mientras se cumpla la condición de estado completa (pozo insuficiente y ninguna vía de
+   ingreso), no según la historia de cómo se llegó a ella.
 4. Dado el punto de venta, un toque simple inicia la canalización de venta (duración según fórmula
    4.4); durante la canalización el jugador que la inició no puede moverse. Un segundo toque sobre el
    punto de venta durante la canalización, de cualquiera de los dos jugadores (ver Edge Case 5.14), la
@@ -1096,8 +1111,8 @@ completo.
    Knobs); (c) el Silo tier 4+ prometía "sin límite de segmentos" sin considerar el presupuesto de
    draw calls — se añade un cap técnico de 6 segmentos visibles, independiente del cap económico
    (3.7, Tuning Knobs).
-10. **(nuevo, ronda 3, defecto vivo encontrado y cerrado en ronda 4)** Pilar 5 (anti-softlock, EV de
-   prevenir vs. reparar) no estaba implementado en este documento — la reparación era instantánea
+10. **(nuevo, ronda 3, defectos vivos encontrados y cerrados en rondas 4 y 5)** Pilar 5 (anti-softlock,
+   EV de prevenir vs. reparar) no estaba implementado en este documento — la reparación era instantánea
    (sin el downtime que `game-concept.md` exige para el patrón validado por el prototipo) y no existía
    piso anti-softlock para costos forzosos sin saldo. Corregido en ronda 3: reparación ahora tiene
    downtime (4.6, Edge Case 5.11) y existe un piso explícito para el caso límite de saldo $0 sin
@@ -1105,11 +1120,15 @@ completo.
    solo cubría el costo de reparación, no el de resiembra que la propia reparación exige (siempre
    termina en Vacía) — un pozo en $0 podía seguir en $0 después de la reparación gratuita, sin poder
    pagar ni la semilla más barata, sin ningún cultivo Creciendo que generara ingreso: un deadlock real,
-   no solo teórico. Se extiende el piso para cubrir también el primer intento de plantar Trigo sobre
-   la parcela recién Vacía, bajo la misma condición de activación (5.10, AC 3d) — ahora la cadena
-   completa reparar-gratis → replantar-gratis garantiza volver a un estado productivo sin depender de
-   saldo en ningún punto. Ver Apéndice D para la tabla de EV completa — la relación se sostiene mejor que antes pero no es una
-   dominancia limpia en todos los casos; ver Apéndice D para la recomendación de seguimiento.
+   no solo teórico. Se extendió el piso para cubrir también el primer intento de plantar Trigo sobre
+   la parcela recién Vacía **tras una reparación gratuita**. **Corregido en ronda 5**: esa extensión de
+   ronda 4 seguía atada al historial causal ("vino de una reparación gratuita"), no al estado — un
+   jugador que paga reparaciones normales hasta drenar el pozo a exactamente $0 justo cuando la última
+   termina (pagada, no gratuita) reproducía el mismo deadlock sin que la regla lo cubriera. Generalizado
+   a una condición puramente de estado: pozo insuficiente + ninguna parcela Creciendo/Lista → plantar
+   Trigo gratis en **cualquier** parcela Vacía, sin importar su historial. Ver Apéndice D para la tabla
+   de EV completa — la relación se sostiene mejor que antes pero no es una dominancia limpia en todos
+   los casos; ver Apéndice D para la recomendación de seguimiento.
 11. **(nuevo, ronda 3)** El spike de rendimiento que este documento declaraba como cobertura de su
    propio contenido en realidad está delimitado (por el propio `game-concept.md`) para el sistema de
    cintas/trabajadores de largo plazo, no para este documento — contradicción entre Dependencies y el
@@ -1302,6 +1321,38 @@ Acceptance Criteria (1–11 con sub-letras); referencias cruzadas entre seccione
 **Decisión de usuario tomada en esta ronda**: revisar los 2 bloqueantes de inmediato en la misma
 sesión, en vez de detener para una sesión aparte o aceptar tal cual — ninguno de los dos era
 advisory, ambos eran defectos reales de la garantía que la ronda 3 ya declaraba resuelta.
+
+**Nota retrospectiva, añadida en ronda 5**: el bloqueante #1 de esta tabla ("decisión aplicada")
+tenía a su vez un defecto vivo — la extensión del piso anti-softlock quedó atada al historial causal
+de la parcela ("vino de una reparación gratuita") en vez de al estado de la granja, dejando sin
+cubrir el mismo deadlock alcanzado por una secuencia de reparaciones pagadas que drena el pozo a $0.
+Ver Apéndice C5 para el registro de ronda 5 y su corrección.
+
+## Apéndice C5 — Registro de decisiones de la ronda 5 de `/design-review` (2026-08-10, pasada de verificación acotada)
+
+Modo: `lean` (sin especialistas). Objetivo: confirmar que los 2 fixes de ronda 4 (concurrencia de
+Fresa y piso anti-softlock) se sostienen en el caso límite completo, no solo en el escenario que
+motivó cada fix — la misma disciplina de verificación que ronda 4 aplicó sobre ronda 3.
+
+| # | Bloqueante | Decisión aplicada |
+|---|---|---|
+| 1 | La extensión del piso anti-softlock (ronda 4, ver Edge Case 5.10, AC 3d, Apéndice C4 #1) solo cubría la resiembra gratis en la parcela que viniera de *una reparación gratuita reciente* — una condición de historial causal. Un jugador que paga reparaciones normales hasta drenar el pozo a exactamente $0 justo cuando la última parcela termina esa reparación *pagada* (no gratuita) reproduce el mismo deadlock (pozo insuficiente, ninguna parcela Creciendo/Lista, una parcela Vacía sin poder pagar semilla) sin que la regla de ronda 4 lo cubra, porque esa parcela nunca pasó por el camino "gratis". | Generalizado a una condición puramente de estado: mientras el pozo esté en $0 (o bajo $2) y ninguna parcela esté en Creciendo/Lista, plantar Trigo gratis en **cualquier** parcela Vacía de la granja, sin importar cómo llegó a ese estado (5.10, AC 3d) |
+
+Ítems verificados sin defectos en esta ronda: el gate de concurrencia de Fresa (3.2, 5.12, AC 9c,
+Tuning Knobs) es consistente en sus 4 ubicaciones tras el fix de ronda 4, sin menciones residuales
+del gate viejo (solo Creciendo/Lista); la corrección de la relación "si y solo si" en Formulas 4.3 no
+rompió ninguna otra referencia que asumiera la equivalencia estricta (no se encontró ninguna); el
+Apéndice C4 y las notas de Apéndice A (ítems 7 y 10) eran consistentes con el cuerpo del documento
+antes de esta ronda — ahora ambos se actualizan para reflejar la corrección de ronda 5.
+
+**Meta-observación**: esta es la segunda vez consecutiva (ronda 4 sobre ronda 3, ronda 5 sobre ronda
+4) que una pasada de verificación encuentra que el fix de la ronda anterior resolvía el escenario que
+lo motivó pero no el invariante de estado subyacente. El patrón concreto en ambos casos de ronda 5 y
+ronda 4 es el mismo: una regla nueva se ata a *cómo se llegó* a una situación (un camino narrativo
+específico) en vez de *qué es cierto en ese momento* (una condición de estado). Recomendación para
+futuras reglas de este tipo en este documento: preferir condiciones de estado ("dado que X es
+verdadero ahora") sobre condiciones de historial ("dado que X acaba de pasar"), salvo que el
+historial sea estrictamente necesario para la regla.
 
 ## Apéndice D — Artefactos verificables (nuevo en ronda 3, exigidos por la síntesis de creative-director)
 

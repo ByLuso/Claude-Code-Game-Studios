@@ -1,52 +1,72 @@
 # Session State
 
 ## Current Task
-Concept prototype for "Rincón Compartido" — validating the shared-economy /
-threat-response co-op loop.
+`/design-review design/gdd/game-concept.md` — first full review completed,
+GDD revised in-place to resolve all 8 blocking items. Awaiting a clean-context
+re-review to confirm the fixes hold.
 
 ## Progress Checklist
 - [x] Game concept written (`design/gdd/game-concept.md`)
 - [x] Engine configured (Godot 4.7.1, GDScript — `/setup-engine`)
-- [x] Prototype scope defined and confirmed with user
-- [x] Prototype implemented (`prototypes/rincon-compartido-concept/`)
-- [x] Playtest debrief completed
-- [x] REPORT.md written (`prototypes/rincon-compartido-concept/REPORT.md`)
-- [x] PROCEED/PIVOT/KILL verdict recorded — **PROCEED** (with note: add
-      content breadth — shop/plots/upgrades — sooner than "full vision")
+- [x] Concept prototype implemented, played, and reported — PROCEED verdict
+      (`prototypes/rincon-compartido-concept/REPORT.md`)
+- [x] `/design-review design/gdd/game-concept.md` (full mode, 6 specialists +
+      creative-director synthesis) — verdict: NEEDS REVISION
+- [x] All 8 blocking items revised directly in `game-concept.md` (see list below)
+- [ ] **Re-review in a fresh session** — run `/clear` then
+      `/design-review design/gdd/game-concept.md` again to confirm
 
-## Key Decisions
-- Prototype path: **Engine** (Godot), not Paper — user wants an interactive movable
-  world, not a rules-only test.
-- Falsifiable hypothesis: "If two players share one account and must decide
-  together in real time how to invest between growth and threat protection,
-  they will feel the interdependence as engaging — we'll know if, after a
-  threat event, both players actively negotiate the response instead of one
-  ignoring the other."
-- Riskiest assumption being tested: shared-economy interdependence is fun, not
-  frustrating (not harvesting feel, not real networking).
-- Co-op mode for this prototype: **local hotseat / split-screen on one device**
-  (two control schemes, one machine) — NOT real wifi networking. A local
-  prototype can't validate networked feel anyway (per prototype methodology),
-  so real local-wifi networking is deferred to a later technical spike.
+## Blocking Items Resolved This Session (2026-08-10 design-review)
+1. MVP reproduced the exact "boring" config the prototype flagged → restored
+   protection-purchase (prevent/repair), added a 2nd purchasable plot as an
+   investment sink, added normal/exotic resource differentiation.
+2. Device topology was ambiguous → locked to **2 real devices over local
+   wifi** (not hotseat — hotseat was only the prototype's testing shortcut).
+3. Technical Considerations table was stale (said "engine undecided") →
+   updated to Godot 4.7.1/GDScript, with HIGH-RISK version pointer.
+4. No consequence for shared money hitting $0 during a threat (softlock
+   risk) → added explicit safeguard in Pillar 5: threat auto-resolves
+   unpaid, never blocks.
+5. No resource-variety-to-price relationship → exotic = lower yield/slower
+   cycle, higher $/unit.
+6. MVP's Core hypothesis lost its falsifiable/observable marker → restored
+   ("negocian activamente...") + added multi-session persistence clause.
+7. Touch interaction pattern for belts/hiring was fully undefined → chosen
+   direction documented (single contextual action button, per prototype),
+   flagged as an explicit Open Question pending a dedicated touch-UX
+   validation before `/setup-engine`/`/create-architecture` lock input.
+8. "Architects of a self-sustaining system" fantasy had no felt endpoint in
+   MVP → resolved via #1 (2nd plot) + added a threat-frequency ceiling to
+   Pillar 5 so the game can actually feel self-sustaining eventually.
 
-## Prototype Scope (confirmed)
-**In scope**: player movement in a small world, harvesting 1 resource type
-(crops), shared economy (single money pool), 1 threat event (plague reduces
-crop yield over time, preventable/repairable by spending money), 2-player
-local hotseat co-op.
+Also folded in several non-blocking Recommended fixes: Pillar 2 got a
+concrete mechanism note, Pillar 5 got the validated prevent/repair pattern
+as an explicit rule, a contribution-stats panel was added to Core Mechanics
+(kept OUT of MVP per creative-director's adjudication — game-designer called
+it nice-to-have, economy-designer wanted it mandatory), networking got a
+measurable reliability bar (reconnect <10s), monetization open question
+reworded to resolve before the economy `/design-system` pass (not just
+before `/create-architecture`), and the Next Steps checklist now reflects
+that `/setup-engine` and `/prototype` are actually done.
 
-**Explicitly cut**: conveyor belts / hireable workers (automation), multiple
-resource types, real wifi networking, menus/art polish/audio.
+## Key Decisions Carried Forward
+- Prototype validated: shared, unattributed economy (Pillar 1) + threat
+  prevent-vs-repair trade-off (Pillar 5) genuinely generates co-op
+  negotiation — this layer is NOT in question, don't re-litigate it.
+- Still genuinely open/untested: real local-wifi networking between 2
+  mobile devices (peer discovery, iOS/Android permissions), and the single
+  contextual-action touch pattern on an actual touchscreen. Both are
+  explicitly flagged in Open Questions as needing their own spike/prototype
+  before `/create-architecture` commits to specific approaches.
 
-## Files Being Worked On
-- `prototypes/rincon-compartido-concept/` (to be created)
-
-## Open Questions
-- Real local-wifi networking feasibility — deferred to a future technical
-  spike, not this prototype.
+## Files Modified This Session
+- `design/gdd/game-concept.md` — all revisions above
+- (Prior session work, already committed: prototype code, REPORT.md,
+  prototypes/index.md, CLAUDE.md, technical-preferences.md, engine reference
+  docs)
 
 ## Current Phase
-Concept prototype cycle complete (PROCEED). Next recommended: `/design-review
-design/gdd/game-concept.md`, `/gate-check`, `/map-systems`, then
-`/design-system [mechanic]` — using the prevent/repair pattern and the
-early-content-breadth lesson from REPORT.md.
+Post-revision, pre-re-review. Next action: `/clear` then re-run
+`/design-review design/gdd/game-concept.md` for a clean-context verification
+pass. After that (assuming APPROVED or CONCERNS-only): `/map-systems` to
+decompose into systems, then `/design-system [system]` per system.

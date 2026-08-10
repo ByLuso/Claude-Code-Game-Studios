@@ -20,7 +20,7 @@
 | **Genre** | Tycoon / Automatización cooperativa (Management Sim + Factory Automation) |
 | **Platform** | Móvil (iOS / Android) |
 | **Target Audience** | Ver Target Player Profile |
-| **Player Count** | Co-op local (2 jugadores, wifi local) — ideal en pareja, jugable en solitario |
+| **Player Count** | Co-op local (2 jugadores, **2 dispositivos**, wifi local) — ideal en pareja, jugable en solitario |
 | **Session Length** | Sesiones de 30-120 min, con ciclos internos de ~5 min |
 | **Monetización** | Sin definir aún — abierta como pregunta (ver Risks and Open Questions) |
 | **Estimated Scope** | Medium (6–9 meses, desarrollador solo) |
@@ -72,6 +72,7 @@ La interdependencia económica real entre los dos jugadores (una sola cuenta, un
 3. Economía compartida (una sola cuenta bancaria) con venta de recursos
 4. Eventos de amenaza periódicos (plagas, derrumbes, incendios) prevenibles con protecciones compradas o resolubles con gestión reactiva
 5. Progresión de automatización que desbloquea nuevos tipos de recursos y piezas
+6. Panel de estadísticas de contribución individual (cuánto cosechó y gastó cada jugador) — solo visibilidad, no restringe el gasto compartido; profundiza la tensión social del Pilar 1. Validado como deseado en el playtest del prototipo. **Fuera de MVP.**
 
 ---
 
@@ -131,7 +132,7 @@ El progreso pertenece a los dos: terreno compartido, cuenta compartida, decision
 *Design test*: Si dudamos entre una feature que separa a los jugadores en economías paralelas o una que los mantiene interdependientes, elegimos la interdependencia.
 
 ### Pillar 2: Manual siempre vale la pena
-Nunca dejamos que la automatización reemplace del todo la diversión — siempre debe existir algo que premie hacerlo a mano.
+Nunca dejamos que la automatización reemplace del todo la diversión — siempre debe existir algo que premie hacerlo a mano. Mecanismo concreto (a formalizar con números en `/design-system`): cada nivel de automatización debe dejar un margen — de velocidad, calidad o rareza de recurso — que solo lo manual puede alcanzar, para que "¿lo hago a mano o dejo que la máquina lo haga?" siga siendo una decisión real y no una ilusión resuelta a favor de automatizar en cuanto esté disponible.
 
 *Design test*: Si dudamos entre que la automatización sustituya por completo una acción o que la versión manual siga pagando mejor / dando más calidad, elegimos mantener la manual relevante.
 
@@ -147,6 +148,12 @@ El jugador siempre debe poder VER el crecimiento en el mundo — más cintas, m�
 
 ### Pillar 5: El riesgo empuja a prepararse
 Amenazas periódicas (plagas, derrumbes, incendios) ponen a prueba la operación; se enfrentan con inversión preventiva (comprar protecciones) o reacción de gestión (reparar, reasignar), nunca con combate directo.
+
+**Patrón validado por el prototipo** (base de este pilar, confirmado divertido en playtest): prevenir cuesta más pero es instantáneo y sin downtime; reparar cuesta menos pero incluye tiempo de inactividad. Cualquier amenaza nueva que se diseñe debe ofrecer una decisión con esa misma estructura de trade-off, no solo "paga o pierde".
+
+**Salvaguarda contra softlock**: si el dinero compartido es insuficiente para prevenir o reparar, la amenaza se resuelve automáticamente al final de su ventana de tiempo, sin cobro — el costo es la pérdida temporal de producción, nunca un bloqueo permanente ni una deuda. Ningún diseño de amenaza debe poder dejar a los jugadores sin salida.
+
+**Techo de frecuencia**: la frecuencia/severidad de las amenazas debe crecer con la operación hasta un techo definido, no indefinidamente — de lo contrario el sistema nunca se siente "autosuficiente" (contradice la Core Fantasy), solo exige atención manual creciente para siempre. El valor exacto del techo se define en `/design-system`.
 
 *Design test*: Si dudamos entre resolver una amenaza con una mecánica de acción/combate o con una decisión de inversión/gestión, elegimos la gestión.
 
@@ -189,13 +196,13 @@ Amenazas periódicas (plagas, derrumbes, incendios) ponen a prueba la operación
 
 | Consideration | Assessment |
 | ---- | ---- |
-| **Recommended Engine** | Sin definir — el usuario no tiene preferencia; ejecutar `/setup-engine` considerando 2D, móvil, networking local y co-op |
-| **Key Technical Challenges** | Sincronizar estado económico compartido en tiempo real vía wifi local entre 2 dispositivos móviles; colocación de cintas transportadoras en cuadrícula táctil; balancear frecuencia de amenazas vs. progreso de automatización |
+| **Recommended Engine** | **Decidido — Godot 4.7.1, GDScript** (vía `/setup-engine`, 2026-08-10). Versión con riesgo de conocimiento ALTO — ver `docs/engine-reference/godot/VERSION.md` antes de sugerir cualquier API de motor |
+| **Key Technical Challenges** | Descubrimiento de red local (peer discovery) entre 2 dispositivos móviles — Godot no trae esto integrado, hay que implementarlo a mano; colocación de cintas transportadoras con un solo botón de acción contextual táctil (patrón validado en teclado, evaluar `VirtualJoystick` de Godot 4.7 para el movimiento); balancear frecuencia de amenazas vs. progreso de automatización con un techo definido (ver Pilar 5) |
 | **Art Style** | 2D top-down / isométrico estilizado (estilo Junkyard Tycoon) |
 | **Art Pipeline Complexity** | Low-Medium (2D custom) |
 | **Audio Needs** | Moderate (feedback de cosecha, alertas de amenaza, música ambiental relajante) |
-| **Networking** | P2P local (wifi) — sin servidores dedicados en el MVP |
-| **Content Volume** | MVP: 3 tipos de recurso base, 1 amenaza por tipo, automatización básica. Visión completa: recursos "exóticos" adicionales, tech tree extenso |
+| **Networking** | **Cliente/host vía ENet** (API de multiplayer de alto nivel de Godot) — **NO es P2P puro**, un dispositivo actúa como host. Godot no incluye descubrimiento de red local (sin mDNS/broadcast integrado) — hay que implementarlo. Riesgos de plataforma sin validar: iOS requiere permiso de Red Local + declarar servicio Bonjour; Android puede tener multicast-lock o aislamiento de AP en algunos routers. **No probado aún** — el prototipo usó hotseat en 1 dispositivo, no red real. Pendiente de spike técnico dedicado antes de comprometer arquitectura. |
+| **Content Volume** | MVP: 2 parcelas (1 inicial + 1 comprable), 3 tipos de recurso base con diferenciación normal/exótico, 1 amenaza por tipo con protección + reparación comprables, automatización básica. Visión completa: recursos "exóticos" adicionales, tech tree extenso |
 | **Procedural Systems** | Ninguno confirmado — posible generación aleatoria de amenazas (tipo, timing), no de terreno |
 
 ---
@@ -207,7 +214,8 @@ Amenazas periódicas (plagas, derrumbes, incendios) ponen a prueba la operación
 - Las amenazas podrían sentirse injustas o frustrantes si no se comunican con suficiente anticipación antes de golpear.
 
 ### Technical Risks
-- Sincronización de estado compartido (economía, inventario, posiciones) entre 2 dispositivos móviles vía wifi local en tiempo real.
+- Sincronización de estado compartido (economía, inventario, posiciones) entre 2 dispositivos móviles vía wifi local en tiempo real, sobre una arquitectura cliente/host (ENet), no P2P puro.
+- Descubrimiento de red local sin librería integrada en Godot, más permisos de iOS (Red Local/Bonjour) y restricciones de Android (multicast lock/aislamiento de AP) — sin validar.
 - Rendimiento de la simulación de automatización (muchas cintas/trabajadores activos) en hardware móvil de gama media/baja.
 
 ### Market Risks
@@ -219,36 +227,40 @@ Amenazas periódicas (plagas, derrumbes, incendios) ponen a prueba la operación
 - El diseño de UI táctil para gestión (paneles de economía, colocación de piezas) puede requerir más iteración de la anticipada.
 
 ### Open Questions
-- ¿Qué modelo de monetización tendrá el juego (pago único, F2P, aún sin decidir)? — Resolver antes de `/create-architecture`.
-- ¿Es viable el networking wifi local en el motor elegido sin librerías de terceros complejas? — Resolver durante `/setup-engine` y con un prototipo técnico temprano.
+- ¿Qué modelo de monetización tendrá el juego (pago único, F2P, aún sin decidir)? — Resolver **antes del `/design-system` de economía**, ya que afecta retroactivamente el diseño de sinks/faucets, no solo antes de `/create-architecture`.
+- ¿Es viable el descubrimiento de red local (peer discovery) entre 2 dispositivos móviles sin librerías de terceros complejas, dados los permisos de iOS (Red Local + Bonjour) y las restricciones de Android (multicast lock / aislamiento de AP)? — Godot no lo trae integrado. Resolver con un **spike técnico dedicado** antes de comprometer arquitectura de red — no alcanza con "durante /setup-engine", ya que el prototipo no llegó a probar red real.
+- ¿El patrón de botón de acción único y contextual (validado en teclado/escritorio en el prototipo) se sostiene en pantalla táctil real? — Validar con un `/prototype` o spike de UX táctil dedicado antes de que `/setup-engine`/`/create-architecture` fijen decisiones de input que sean costosas de cambiar después.
 - ¿Cómo funciona mecánicamente el "modo solo" (un jugador controla ambos roles, o se simplifica el loop)? — Resolver en `/map-systems` o un `/design-system` dedicado.
 
 ---
 
 ## MVP Definition
 
-**Core hypothesis**: Dos jugadores en la misma red wifi local encuentran satisfactorio cosechar manualmente y automatizar progresivamente una operación compartida de 3 recursos, incluso cuando una amenaza periódica los obliga a reaccionar juntos.
+**Core hypothesis**: Dos jugadores, cada uno en su propio dispositivo conectado por wifi local, encuentran satisfactorio cosechar manualmente y automatizar progresivamente una operación compartida de 3 recursos — **lo sabremos si, tras un evento de amenaza, ambos negocian activamente la respuesta (prevenir pagando más al instante, o reparar pagando menos pero aceptando tiempo de inactividad) en vez de que uno ignore al otro**, y si esa satisfacción se sostiene a lo largo de varias sesiones, no solo en la primera media hora.
+
+*Nota: esta hipótesis y su marcador observable ya fueron confirmados por un concept prototype — ver `prototypes/rincon-compartido-concept/REPORT.md`. El MVP real debe evitar reproducir la configuración de contenido mínimo que ese prototipo encontró aburrida tras unos ciclos.*
 
 **Required for MVP**:
-1. 1 parcela compartida con 3 tipos de recurso base (cultivo, árbol, mineral) recolectables a mano
+1. 2 parcelas por operación compartida (1 inicial + 1 comprable) con 3 tipos de recurso base (cultivo, árbol, mineral), cada uno con variante normal y exótica (exótica: menor rendimiento/ciclo más lento, mayor valor por unidad)
 2. 1 pieza de automatización por recurso (cinta transportadora O trabajador, no ambos aún)
 3. Cuenta bancaria compartida y venta de recursos
-4. 1 evento de amenaza recurrente reactivo (ej. plaga en el cultivo) — sin protección comprable todavía
-5. Conexión wifi local funcional y confiable entre 2 dispositivos
+4. 1 evento de amenaza recurrente, con **ambas** respuestas disponibles: prevenir (pago mayor, instantáneo) y reparar (pago menor, con tiempo de inactividad) — ver salvaguarda contra softlock en Pilar 5
+5. Compra de la segunda parcela como sink de inversión
+6. Conexión wifi local funcional entre 2 dispositivos reales (no hotseat), con reconexión en menos de 10 segundos tras una caída breve, o un mensaje de error claro si falla
 
 **Explicitly NOT in MVP** (defer to later):
-- Compra de protecciones contra amenazas (se agrega tras validar que el loop base es divertido)
-- Múltiples parcelas o expansión de terreno
-- Variedad completa de recursos, incluidos los "exóticos"
+- Más de 2 parcelas / expansión de terreno adicional
+- Trabajadores y cintas transportadoras combinados en la misma pieza (solo una de las dos por MVP)
 - Eventos de mercado con fluctuación de precios
 - Tech tree extenso de automatización
+- Panel de estadísticas de contribución (ver Core Mechanics — deseado pero no bloqueante para probar la hipótesis)
 
 ### Scope Tiers (if budget/time shrinks)
 
 | Tier | Content | Features | Timeline |
 | ---- | ---- | ---- | ---- |
-| **MVP** | 1 parcela, 3 recursos base | Cosecha manual + automatización parcial (1 tipo) + 1 amenaza reactiva + wifi local | 4-8 semanas |
-| **Vertical Slice** | 1 parcela completa | + compra de protecciones, cintas y trabajadores combinados | 2-3 meses |
+| **MVP** | 2 parcelas (1 inicial + 1 comprable), 3 recursos base (normal + exótico) | Cosecha manual + automatización parcial (1 tipo) + amenaza con prevenir/reparar + compra de 2ª parcela + wifi local real (2 dispositivos) | 4-8 semanas |
+| **Vertical Slice** | 2+ parcelas completas | + cintas y trabajadores combinados en la misma pieza, panel de estadísticas de contribución | 2-3 meses |
 | **Alpha** | Todas las parcelas/recursos, sin pulir | Todas las features de la visión completa, en bruto | 4-6 meses |
 | **Full Vision** | Contenido completo, pulido | Tech tree completo, eventos de mercado, variedad de amenazas, arte pulido | 6-9 meses |
 
@@ -256,10 +268,10 @@ Amenazas periódicas (plagas, derrumbes, incendios) ponen a prueba la operación
 
 ## Next Steps
 
-- [ ] Get concept approval from creative-director
-- [ ] Run `/setup-engine` — configurar el motor considerando 2D, móvil, networking local y co-op
-- [ ] Run `/prototype` sobre el mecanismo más riesgoso: networking local + economía compartida en tiempo real
-- [ ] Si el prototipo PROCEDE: `/art-bible` antes de escribir cualquier GDD
+- [x] Get concept approval from creative-director — ver síntesis en `/design-review` (2026-08-10): NEEDS REVISION → revisado en esta misma sesión
+- [x] Run `/setup-engine` — Godot 4.7.1, GDScript decidido y configurado
+- [x] Run `/prototype` — concept prototype de economía compartida + amenazas construido y jugado, veredicto PROCEED (ver `prototypes/rincon-compartido-concept/REPORT.md`). Nota: no probó red real (hotseat), ni sensación táctil, ni topología de 2 dispositivos — quedan como spikes/prototipos pendientes.
+- [ ] `/art-bible` antes de escribir cualquier GDD
 - [ ] Decompose concept into systems (`/map-systems`)
 - [ ] Design each system (`/design-system [system-name]`) — usar aprendizajes del prototipo en Tuning Knobs y Formulas
 - [ ] Build vertical slice in Pre-Production (`/vertical-slice`) — validar el loop completo antes de comprometerse a Producción

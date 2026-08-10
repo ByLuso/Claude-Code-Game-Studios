@@ -1,139 +1,65 @@
 # Session State
 
 ## Current Task
-El usuario eligió, de entre varias opciones ofrecidas, resolver la decisión
-de alcance del spike de rendimiento (Apéndice A #11 de `farm-economy-system.md`).
-Resuelto: en vez de programar un segundo spike separado, se amplió el spike
-existente de `game-concept.md` Next Steps para incluir una **escena de
-prueba combinada** — automatización a techo de entidades + el contenido
-completo de `farm-economy-system.md` a tier Vertical Slice, ambos
-simultáneos en pantalla — porque es el escenario de carga real que el juego
-produce una vez que Vertical Slice suma la granja sobre la automatización
-del MVP, y es más exigente que probar cualquiera de los dos por separado.
-Editado en ambos documentos (game-concept.md Next Steps + Content Volume;
-farm-economy-system.md Dependencies + Apéndice A #11 + nota de Status).
-**Importante**: esto es una decisión de alcance, no una ejecución del
-spike — el spike combinado en sí (correrlo en hardware de referencia)
-sigue sin hacerse, sigue bloqueante antes de `/map-systems`.
+Se escribió el **Art Bible completo** (`design/art/art-bible.md`, 9 secciones) vía el skill
+`/art-bible`, cerrando el gap de proceso real que se encontró: `game-concept.md` Next Steps exige
+`/art-bible` antes de escribir cualquier GDD, pero `farm-economy-system.md` ya se había escrito y
+revisado 5 veces sin que existiera. Modo `lean` (sin `production/review-mode.txt` → default lean),
+así que el gate AD-ART-BIBLE (creative-director sign-off) se saltó a propósito, documentado en el
+Document Status del propio archivo.
 
-Antes de esto: `farm-economy-system.md` completó su **ronda 5** de
-`/design-review` (pasada de verificación acotada, sin especialistas),
-comiteada en `d71d9b8`. Rondas 4 y 5 seguidas encontraron cada una un
-defecto real en el fix de la ronda anterior — ambas veces el mismo patrón:
-una regla nueva atada a *cómo se llegó* a una situación en vez de *qué es
-cierto en ese momento* (ver Apéndice C5, meta-observación).
-
-**Aún sin decidir / pendiente**: (a) otra ronda de verificación sobre
-`farm-economy-system.md` (rendimientos decrecientes, no urgente), (b)
-retomar la ronda-4 de verificación pendiente de `game-concept.md`, (c)
-avanzar a `/design-system` para un sistema nuevo, (d) actualizar
-`systems-index.md` (no existe todavía), (e) el spike combinado en sí
-mismo — pero eso es trabajo de ingeniería/prototipo, no de `/design-review`
-ni de edición de GDDs.
-
-## Farm Economy System — Status Summary (2026-08-10, tras 5 rondas)
-El GDD (`design/gdd/farm-economy-system.md`, ~1400 líneas) es ahora una
-especificación madura y referenciada internamente: multi-cultivo con una
-máquina de estados de 9 estados por parcela (formalizada en Apéndice D.1),
-expansión de terreno, Máquinas (disparo trigger-bound, retraso proporcional),
-Infraestructura (Silo con capacidad base + desbordamiento, Almacén con
-fricción de recarga, Refugio con radio anclado a estructura física),
-decoración/confort, desbloqueo por hitos con aviso visible, implementación
-completa de Pilar-5 (downtime de reparación + piso anti-softlock generalizado
-a condición de estado tras rondas 4-5), y un cap de concurrencia de Fresa a
-nivel de granja que cuenta Creciendo/Lista/Descansando (tras la corrección de
-ronda 4). Los tres spikes bloqueantes de `game-concept.md` (rendimiento,
-red, UX táctil) siguen referenciados como "⚠ Provisional" en vez de resueltos
-por adelantado.
-
-Ítems abiertos, dejados sin resolver a propósito (ver Apéndice A, C3):
-el spike de rendimiento todavía no cubre el contenido propio de este
-documento (solo cintas/trabajadores) — pide expansión de alcance o un spike
-dedicado; Silo tier 4+ es solo una extensión nominal del runway (sink de
-prestigio, no una solución real); AC1 está explícitamente bloqueado (no solo
-provisional) hasta que el spike de UX táctil defina un gesto coherente con
-un solo dedo; tres clases de condición de carrera enumeradas pero sin
-resolver, pendientes del spike de red; el multiplicador de accesibilidad y
-la banda de $/s para cultivos futuros son placeholders no vinculantes.
-
-## Prior Task (resuelto, solo contexto)
-`/design-review design/gdd/game-concept.md` — ronda 3 (re-revisión en
-contexto limpio) completada y comiteada (`1444221`): 8 especialistas +
-síntesis de creative-director, 6 bloqueantes, todos resueltos.
-`game-concept.md` también se tocó después (no como ronda de design-review
-separada) para añadir la referencia bidireccional a `farm-economy-system.md`
-que exige la regla de Dependencies de `design-docs.md`. Una ronda 4 de
-verificación de `game-concept.md` en sí se planeó pero nunca se corrió —
-quedó eclipsada por el pivote a escribir e iterar `farm-economy-system.md`.
-Sigue abierta si se quiere cerrar ese loop, pero no bloquea nada ahora mismo.
+Identidad visual acordada: "diorama de juguete despertando" — toma el arco de transformación
+crudo→construido de Junkyard Tycoon pero lo renderiza con la suavidad de My Little Universe (referencia
+añadida esta sesión, la más influyente de las 4). Hallazgos importantes de esta pasada:
+- El enjambre de plaga se rediseñó de los "triángulos oscuros" literales del GDD a formas de
+  gota/diamante suave en nube dispersa — los triángulos afilados rozaban iconografía de combate,
+  violando el Anti-Pilar de `game-concept.md` a nivel de forma, no solo de animación.
+- Conflicto real resuelto y documentado (no en silencio): la pre-alerta de plaga en el GDD dice "rojo
+  tenue", pero el mood work la cambió a azul-blanco frío para no leerse como peligro — eso libera el
+  rojo por completo para la identidad exclusiva de la Fresa. `ux-designer` encontró un hueco de
+  accesibilidad relacionado (alerta dependiendo solo de color con ventana de reacción de apenas 4s en
+  Fresa) — se resolvió añadiendo un cambio de forma/contorno redundante al color, no solo color.
+- `technical-artist` flagueó 2 riesgos de versión de Godot 4.7.1 sin verificar (cambios de API de
+  partículas en 4.7, rework de Glow en 4.6) y un requisito concreto de batching (Y-sort rompe batching
+  2D) que debería sumarse al spike de rendimiento combinado ya pendiente de `farm-economy-system.md`.
 
 ## Progress Checklist
-- [x] Concepto de juego escrito (`design/gdd/game-concept.md`)
-- [x] Motor configurado (Godot 4.7.1, GDScript — `/setup-engine`)
-- [x] Concept prototype implementado, jugado y reportado — veredicto PROCEED
-      (`prototypes/rincon-compartido-concept/REPORT.md`)
-- [x] `game-concept.md` rondas 1-3 `/design-review` — todos los bloqueantes
-      resueltos (commits f568e1d, bcd0278, 1444221)
-- [ ] `game-concept.md` ronda-4 de verificación — planeada, no corrida, no
-      bloquea nada por ahora (ver Prior Task arriba)
-- [x] `farm-economy-system.md` escrito (commit 1017061)
-- [x] `farm-economy-system.md` ronda 1 `/design-review` (MAJOR REVISION
-      NEEDED, 13 bloqueantes) — resuelto (commit 1b2f08e)
-- [x] `farm-economy-system.md` ronda 2 `/design-review` (NEEDS REVISION, 5
-      bloqueantes) — resuelto (commit d413c92)
-- [x] `farm-economy-system.md` ronda 3 `/design-review` (NEEDS REVISION —
-      los fixes de ronda 2 eran superficiales) — resuelto con fix de
-      propagación + artefactos verificables de Apéndice D (commit 3e00a12)
-- [x] `farm-economy-system.md` ronda 4 — verificación acotada (NEEDS
-      REVISION, 2 bloqueantes reales en garantías que ronda 3 daba por
-      cerradas) — resuelto (commit 233265a)
-- [x] `farm-economy-system.md` ronda 5 — verificación acotada sobre los
-      fixes de ronda 4 (NEEDS REVISION, 1 bloqueante — el piso anti-softlock
-      seguía atado a historial causal, no a estado) — resuelto (commit
-      d71d9b8)
-- [x] Decisión de alcance del spike de rendimiento (Apéndice A #11 del GDD)
-      — resuelta: spike existente ampliado a escena combinada
-      (automatización + farm-economy-system.md a tier Vertical Slice) en
-      vez de un spike dedicado separado
-- [ ] Ejecutar el spike de rendimiento combinado en sí (hardware de
-      referencia gama media/baja) — bloqueante antes de `/map-systems`,
-      trabajo de ingeniería/prototipo, no de diseño
-- [ ] Spike de red, spike de UX táctil (ambos bloqueantes antes de
-      `/create-architecture`, según Next Steps de `game-concept.md`)
+- [x] Concepto de juego escrito y aprobado (4 rondas de `/design-review`, APPROVED)
+- [x] Motor configurado (Godot 4.7.1, GDScript)
+- [x] Concept prototype implementado, jugado, veredicto PROCEED
+- [x] `farm-economy-system.md` escrito y con 5 rondas de `/design-review` resueltas
+- [x] Decisión de alcance del spike de rendimiento resuelta (spike combinado, no separado)
+- [x] **Art Bible completo** (`design/art/art-bible.md`, 9 secciones, modo lean) — sin comitear
+      todavía, ver Files Modified
+- [ ] Comitear y pushear el art bible (pendiente, próximo paso inmediato de esta sesión)
+- [ ] Ejecutar el spike de rendimiento combinado (ahora con el requisito de batching que
+      `technical-artist` añadió) — bloqueante antes de `/map-systems`, trabajo de ingeniería real
+- [ ] Spike de red, spike de UX táctil (bloqueantes antes de `/create-architecture`)
+- [ ] `/map-systems` — bloqueado hasta que corra el spike de rendimiento
+- [ ] `systems-index.md` no existe todavía
+- [ ] `/consistency-check` — verificar que `farm-economy-system.md` no choca visualmente con el art
+      bible recién escrito (opción real ahora que el art bible existe, antes no aplicaba)
 - [ ] `/design-system [sistema]` por sistema, luego `/create-architecture`
 
 ## Key Decisions Carried Forward
-- El prototipo validó: economía compartida sin atribución (Pilar 1) +
-  trade-off prevenir-vs-reparar ante amenazas (Pilar 5) genera negociación
-  real entre jugadores — esta capa NO está en cuestión, no reabrir.
-- El concepto en sí es sólido según creative-director en todas las rondas de
-  ambos documentos — ningún pilar está mal, ningún sistema central está mal
-  concebido.
-- Tres spikes técnicos siguen siendo el gate duro antes de que cualquiera de
-  los dos documentos sea implementation-ready: rendimiento por escala de
-  entidades (antes de `/map-systems`), autoridad de red (antes de
-  `/create-architecture`), UX táctil + aviso entre compañeros (antes de
-  `/create-architecture`). Ninguno se ha corrido todavía. El contenido propio
-  de `farm-economy-system.md` además carece de cobertura de spike explícita
-  incluso una vez que el spike existente corra — ver Apéndice A #11 de ese
-  documento.
-- Meta-lección de las rondas 3, 4 y 5 (documentada en Apéndice C3 y C5): los
-  parches locales que no se propagan por Formulas/Edge Cases/Acceptance
-  Criteria, o que se atan a un historial causal específico en vez de a un
-  invariante de estado, producen fixes que parecen resueltos pero tienen
-  defectos vivos. Cualquier futuro parche a este documento debería revisar
-  propagación y preferir condiciones de estado sobre condiciones de
-  historial, salvo que el historial sea estrictamente necesario.
+- El prototipo validó economía compartida (Pilar 1) + trade-off prevenir-vs-reparar (Pilar 5) — no
+  reabrir.
+- El concepto es sólido en todas las rondas de ambos GDDs.
+- Tres spikes técnicos (rendimiento — ahora con requisito de batching del art bible sumado, red, UX
+  táctil) siguen siendo el gate duro antes de `/map-systems`/`/create-architecture`. Ninguno se ha
+  ejecutado — trabajo de ingeniería, no de este agente de diseño.
+- El art bible reserva un placeholder de vocabulario visual (glyph de "presencia del compañero",
+  agnóstico de significado) para cuando el spike de UX táctil decida el mecanismo real de aviso entre
+  compañeros — no se diseñó el mecanismo, solo el hueco visual.
+- Meta-lección de rondas 3-5 de `farm-economy-system.md`: preferir condiciones de estado sobre
+  condiciones de historial en reglas futuras.
 
-## Files Modified This Session
-- `design/gdd/farm-economy-system.md` — fixes de ronda 4 (commit `233265a`)
-  y ronda 5 (commit `d71d9b8`)
-- `production/session-state/active.md` — este archivo, reescrito para
-  reflejar la ronda 5 (estaba desactualizado, solo llegaba hasta ronda 4)
+## Files Modified This Session (sin comitear)
+- `design/art/art-bible.md` — nuevo, 9 secciones completas
+- `production/session-state/active.md` — este archivo
 
 ## Current Phase
-Ronda 5 comiteada y pusheada para `farm-economy-system.md`. El usuario dijo
-"prosigamos" sin especificar dirección — preguntando explícitamente por
-dónde continuar en vez de asumir, dado que hay varias direcciones válidas
-abiertas (ver "Sin decidir todavía" arriba) y ninguna es obviamente la
-correcta sin más contexto del usuario.
+Art bible recién completado en esta sesión, todavía sin comitear ni pushear — es el próximo paso
+inmediato. Después de eso, no queda ningún trabajo de diseño puro obviamente accionable sin: (a) que
+alguien ejecute los spikes técnicos, o (b) una decisión del usuario sobre si avanzar a
+`/consistency-check` (ahora que el art bible existe) o a `/design-system` para un sistema nuevo.

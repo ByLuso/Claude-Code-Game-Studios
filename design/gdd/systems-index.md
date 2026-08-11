@@ -30,7 +30,7 @@ cobertura parcial y ordena lo que falta.
 | 2 | Input / Acción Contextual Única | Core | MVP | In Design (parcial, ⚠ Provisional) | design/gdd/farm-economy-system.md §3.4 | — |
 | 3 | Economía Compartida | Economy | MVP | In Design (parcial) | design/gdd/farm-economy-system.md (embebido) | — |
 | 4 | Terreno y Parcelas | Core | MVP | In Design (parcial, crop-specific) | design/gdd/farm-economy-system.md §3.3 | Economía Compartida |
-| 5 | Amenazas (framework genérico) | Gameplay | MVP | In Design (parcial — solo plagas) | design/gdd/farm-economy-system.md §3.5, 4.3, 4.6, Apéndice D.2 | Economía Compartida, Terreno y Parcelas, Networking |
+| 5 | Amenazas (framework genérico) | Gameplay | MVP | Designed (pendiente `/design-review`) | design/gdd/amenazas.md | Economía Compartida, Terreno y Parcelas, Networking |
 | 6 | Recolección Manual | Gameplay | MVP | In Design (parcial, crop-specific) | design/gdd/farm-economy-system.md §3.4 | Input, Terreno y Parcelas |
 | 7 | Cultivos (versión MVP mínima) | Economy | MVP | Not Started (la versión existente es Vertical Slice, no MVP) | — | Terreno, Amenazas, Recolección, Economía |
 | 8 | Madera (inferred) | Economy | MVP | Not Started | — | Terreno, Amenazas, Recolección, Economía |
@@ -155,16 +155,20 @@ Ninguna encontrada.
 | Design docs started (parcial o completo) | 11 |
 | Design docs reviewed (`/design-review` corrido) | 5 (todos dentro de `farm-economy-system.md`, 5 rondas) |
 | Design docs approved | 4 (Cultivos-VS, Máquinas, Infraestructura, Decoración/Confort — todos como partes de `farm-economy-system.md`) |
-| MVP systems designed (completo, no parcial) | 0/10 |
+| MVP systems designed (completo, no parcial) | 1/10 (Amenazas, pendiente `/design-review`) |
 | Vertical Slice systems designed (completo) | 4/5 (falta Panel de estadísticas de contribución) |
 
 ---
 
 ## Next Steps
 
-- [ ] Diseñar **Amenazas** (framework genérico) vía `/design-system amenazas` — siguiente en la cola,
-      generalizando desde lo ya probado en `farm-economy-system.md` §3.5
-- [ ] Diseñar el resto de sistemas MVP en el orden de arriba
+- [x] Diseñar **Amenazas** (framework genérico) vía `/design-system amenazas` — completo, ver
+      `design/gdd/amenazas.md`; pendiente `/design-review` en sesión aparte
+- [ ] Diseñar el resto de sistemas MVP — nota: Amenazas (#5) se diseñó fuera de orden estricto, a
+      petición explícita; #1-4 (Networking, Input, Economía Compartida, Terreno y Parcelas) siguen
+      Not Started como GDDs propios (solo embebidos parcialmente en `farm-economy-system.md`) y son
+      dependencias formales de Amenazas — conviene cerrarlos antes de avanzar a Madera/Minerales, que
+      si dependen de todos ellos
 - [ ] Ejecutar los 3 spikes técnicos (red, UX táctil, rendimiento combinado) — bloqueantes antes de
       `/create-architecture`, trabajo de ingeniería real
 - [ ] Correr `/design-review` en cada GDD nuevo en una sesión aparte

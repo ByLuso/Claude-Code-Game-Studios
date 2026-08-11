@@ -19,9 +19,11 @@ algo jugable.
 
 **Explícitamente NO prueba**: red real (2 jugadores locales, mismo teclado,
 mismo dispositivo — la capa de red de `amenazas.md` sigue ⚠ Provisional, un
-prototipo local no puede validarla), Máquinas/Infraestructura (más allá del
-Refugio)/Silo/expansión de terreno, más de un tipo de cultivo, la sensación
-táctil final en móvil (esto corre con teclado en escritorio).
+prototipo local no puede validarla), Silo/capacidad de venta, Decoración/
+Confort, el gesto real de mantener-para-plantar (⚠ Provisional en el GDD,
+pendiente del spike de UX táctil — este spike usa un toque simple, ver nota
+de Sembradora abajo), la sensación táctil final en móvil (esto corre con
+teclado en escritorio).
 
 **Actualizado 2026-08-11**: se añadió el segundo jugador local (Pilar 1
 necesita 2 personas para probarse de verdad), el Refugio (para poder ver la
@@ -32,6 +34,20 @@ y los 3 tipos de cultivo (Trigo/Maíz/Fresa) con sus números reales de
 1 en vuelo en toda la granja). **Los umbrales de desbloqueo están escalados
 hacia abajo** (100 unidades de trigo reales tardarían demasiado en un spike
 corto) — ver `scripts/cultivos.gd` para los números exactos usados aquí.
+
+**Segunda actualización 2026-08-11**: se añadió expansión de terreno (6
+parcelas en total, 4 empiezan bloqueadas con costos reales de
+`farm-economy-system.md` §4.2: $50/$120/$250/$450) y Máquinas compradas en
+un nuevo edificio, el Taller (Sembradora $200, Cosechadora $350, §3.6). La
+Sembradora auto-replanta el cultivo seleccionado apenas una parcela vuelve a
+quedar vacía — una divergencia deliberada del efecto real ("reduce el
+mantener-para-plantar de 0.4s a 0.15s"), documentada en `scripts/maquinas.gd`
+porque este spike nunca modeló ese gesto. La Cosechadora encadena
+auto-cosechas a parcelas Listas adyacentes (distancia Chebyshev 1) cada vez
+que **cosechas manualmente** una parcela — nunca se dispara sola ni encadena
+otra auto-cosecha, respetando el Anti-Pilar "NO automatización 100%
+desatendida"; tampoco cosecha Fresa nunca (solo manual, por su tope de
+concurrencia).
 
 ## Cómo correrlo
 
@@ -91,6 +107,25 @@ en este spike.
 - Solo puede haber **una amenaza activa a la vez** en todo el mapa —
   verificable jugando: nunca vas a ver el parpadeo azul-blanco en las 2
   parcelas simultáneamente.
+- Ahora hay **6 parcelas** en total (grid 3×2); 4 empiezan **Bloqueadas**
+  (textura gris de "reja" + candado, sin poder plantar). Acércate y pulsa tu
+  tecla de acción para **comprar el terreno** al precio mostrado ($50 / $120
+  / $250 / $450, subiendo con la distancia al Refugio). Una vez comprada,
+  queda Vacía como cualquier otra.
+- El edificio gris en la parte de abajo es el **Taller**. Acércate y pulsa tu
+  tecla de acción para comprar máquinas en orden: primero la **Sembradora**
+  ($200), después la **Cosechadora** ($350). El HUD (línea inferior) muestra
+  cuáles ya compraste.
+- Con la **Sembradora** comprada, cualquier parcela se **auto-replanta** con
+  el cultivo seleccionado apenas queda Vacía (después de cosechar o de que
+  una amenaza la dañe y la repares) — ya no necesitas volver a plantar a
+  mano cada ciclo.
+- Con la **Cosechadora** comprada, cosechar una parcela **a mano** dispara
+  una cadena: cualquier parcela vecina (las 8 alrededor, no solo arriba/
+  abajo/izq/der) que esté Lista se auto-cosecha sola tras un pequeño retraso
+  (25% de su tiempo de crecimiento) — verás un contador "Cosechadora: X.Xs"
+  sobre la parcela. La Fresa nunca se auto-cosecha (siempre manual), y la
+  auto-cosecha nunca dispara otra cadena por sí sola.
 
 ## Qué observar durante el playtest
 
@@ -110,6 +145,18 @@ en este spike.
 - ¿El tope de concurrencia de Fresa (máx. 1 en vuelo) se siente como una
   restricción interesante, o como una limitación arbitraria/confusa cuando
   el botón de plantar simplemente no aparece en la segunda parcela?
+- ¿La expansión de terreno (6 parcelas, costos crecientes) da una sensación
+  de progresión satisfactoria, o el salto de precio ($50 a $450) se siente
+  desbalanceado en un pozo que arranca en $20?
+- Con la Sembradora comprada: ¿el auto-replante se siente como el "alivio de
+  fricción" que busca el diseño real, o quita demasiada agencia (ya no
+  decides activamente qué/cuándo plantar)?
+- Con la Cosechadora comprada: ¿la cadena de auto-cosecha en vecinos se lee
+  con claridad (el contador de tiempo ayuda), o es difícil notar qué
+  parcelas se van a cosechar solas?
+- ¿Comprar terreno y máquinas en el mismo pozo compartido que paga Prevenir/
+  Reparar genera tensión de decisión real (invertir en crecer vs. guardar
+  colchón para amenazas), o rara vez compiten en la práctica?
 
 ## Estado
 

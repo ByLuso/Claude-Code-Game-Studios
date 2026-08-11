@@ -56,7 +56,7 @@ func _physics_process(_delta: float) -> void:
 	velocity = dir.normalized() * speed
 	move_and_slide()
 
-	parcela_objetivo = _buscar_parcela_mas_cercana()
+	parcela_objetivo = _buscar_interactuable_mas_cercano()
 	queue_redraw()
 
 	var pressed := Input.is_physical_key_pressed(_key_action)
@@ -72,8 +72,8 @@ func _physics_process(_delta: float) -> void:
 			Cultivos.ciclar_seleccion()
 		_prev_cycle_pressed = cycle_pressed
 
-func _buscar_parcela_mas_cercana() -> Node:
-	var candidatas := get_tree().get_nodes_in_group("parcelas")
+func _buscar_interactuable_mas_cercano() -> Node:
+	var candidatas := get_tree().get_nodes_in_group("interactuables")
 	var mas_cercana: Node = null
 	var mejor_dist: float = RANGO_ACCION
 	for p in candidatas:

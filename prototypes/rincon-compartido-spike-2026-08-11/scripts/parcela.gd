@@ -4,21 +4,26 @@ extends Area2D
 # through /design-review round 5) feel coherent when played end to end?
 # Date: 2026-08-11
 #
-# Updated: 3 tipos de cultivo (Trigo/Maiz/Fresa) via Cultivos autoload, en vez
-# de constantes fijas de trigo. Fresa respeta su tope de concurrencia (max 1
-# en vuelo en toda la granja) -- se corta deliberadamente la "Descansando"
-# post-cosecha de Fresa para no crecer mas el alcance de este spike.
+# Updated: estado Bloqueada + expansion de terreno (design/gdd/farm-economy-
+# system.md 3.3, 4.2); efecto de Cosechadora (cadena de auto-cosecha en
+# vecinos Chebyshev-1, 3.6) y de Sembradora (auto-replante, ver maquinas.gd
+# para la nota de por que diverge del mecanismo real).
 
 signal estado_cambio
 signal severidad_pendiente_cambio(severidad: String)
 
-enum Estado { VACIA, CRECIENDO, LISTA, PRE_ALERTA, AMENAZA_ACTIVA, DANADA, REPARANDO }
+enum Estado { BLOQUEADA, VACIA, CRECIENDO, LISTA, PRE_ALERTA, AMENAZA_ACTIVA, DANADA, REPARANDO }
 
 const PRE_ALERT_DURATION: float = 0.5
 const PREVENT_COST: int = 15
 const REPAIR_COST: int = 10
 const REPAIR_DOWNTIME_SEVERO: float = 4.0
 const REPAIR_DOWNTIME_REDUCIDO: float = 2.0
+
+@export var estado_inicial: Estado = Estado.VACIA
+@export var coste_desbloqueo: int = 0
+@export var col: int = 0
+@export var fila: int = 0
 
 var estado: Estado = Estado.VACIA
 var severidad_actual: String = "Severo"
@@ -27,9 +32,12 @@ var _progreso: float = 0.0
 var _timer: float = 0.0
 var _pulse_time: float = 0.0
 var _reaction_window: float = 6.0
+var _auto_harvest_pendiente: float = -1.0
 
 func _ready() -> void:
+	estado = estado_inicial
 	add_to_group("parcelas")
+	add_to_group("interactuables")
 	queue_redraw()
 
 func esta_elegible_para_amenaza() -> bool:
@@ -45,6 +53,8 @@ func iniciar_pre_alerta() -> void:
 
 func accion_disponible() -> String:
 	match estado:
+		Estado.BLOQUEADA:
+			return "Comprar terreno ($%d)" % coste_desbloqueo
 		Estado.VACIA:
 			var cultivo: String = Cultivos.cultivo_seleccionado
 			if cultivo == "Fresa" and Cultivos.fresa_en_vuelo:
@@ -63,22 +73,15 @@ func accion_disponible() -> String:
 
 func ejecutar_accion() -> bool:
 	match estado:
-		Estado.VACIA:
-			var cultivo: String = Cultivos.cultivo_seleccionado
-			if cultivo == "Fresa" and Cultivos.fresa_en_vuelo:
+		Estado.BLOQUEADA:
+			if not Economia.gastar(coste_desbloqueo):
 				return false
-			var datos: Dictionary = Cultivos.DATA[cultivo]
-			if not Economia.gastar(datos["seed_cost"]):
-				return false
-			tipo_cultivo = cultivo
-			_reaction_window = datos["reaction_window"]
-			if cultivo == "Fresa":
-				Cultivos.fresa_en_vuelo = true
-			estado = Estado.CRECIENDO
-			_progreso = 0.0
+			estado = Estado.VACIA
 			estado_cambio.emit()
 			queue_redraw()
 			return true
+		Estado.VACIA:
+			return _plantar(Cultivos.cultivo_seleccionado)
 		Estado.LISTA:
 			var datos: Dictionary = Cultivos.DATA[tipo_cultivo]
 			var unidades: int = datos["units"]
@@ -86,9 +89,9 @@ func ejecutar_accion() -> bool:
 			Cultivos.registrar_venta(unidades)
 			if tipo_cultivo == "Fresa":
 				Cultivos.fresa_en_vuelo = false
-			estado = Estado.VACIA
-			estado_cambio.emit()
-			queue_redraw()
+			_entrar_vacia()
+			if Maquinas.tiene_cosechadora:
+				_disparar_cadena_cosechadora()
 			return true
 		Estado.AMENAZA_ACTIVA:
 			if not Economia.gastar(PREVENT_COST):
@@ -111,6 +114,47 @@ func ejecutar_accion() -> bool:
 		_:
 			return false
 
+func _plantar(cultivo: String) -> bool:
+	if cultivo == "Fresa" and Cultivos.fresa_en_vuelo:
+		return false
+	var datos: Dictionary = Cultivos.DATA[cultivo]
+	if not Economia.gastar(datos["seed_cost"]):
+		return false
+	tipo_cultivo = cultivo
+	_reaction_window = datos["reaction_window"]
+	if cultivo == "Fresa":
+		Cultivos.fresa_en_vuelo = true
+	estado = Estado.CRECIENDO
+	_progreso = 0.0
+	estado_cambio.emit()
+	queue_redraw()
+	return true
+
+func _entrar_vacia() -> void:
+	estado = Estado.VACIA
+	estado_cambio.emit()
+	queue_redraw()
+	# Sembradora (simplificada, ver maquinas.gd): auto-replanta el cultivo
+	# seleccionado apenas la parcela queda libre, si hay saldo. Sin
+	# penalizacion si no alcanza -- simplemente se queda Vacia.
+	if Maquinas.tiene_sembradora:
+		_plantar(Cultivos.cultivo_seleccionado)
+
+func _disparar_cadena_cosechadora() -> void:
+	for otra in get_tree().get_nodes_in_group("parcelas"):
+		if otra == self or otra.estado != Estado.LISTA:
+			continue
+		if otra.tipo_cultivo == "Fresa":
+			continue  # Cosechadora nunca cosecha Fresa (manual-only)
+		if absi(otra.col - col) <= 1 and absi(otra.fila - fila) <= 1:
+			var retraso: float = Cultivos.DATA[otra.tipo_cultivo]["grow_time"] * Maquinas.RETRASO_COSECHADORA_FRACCION
+			otra.disparar_auto_cosecha(retraso)
+
+func disparar_auto_cosecha(retraso: float) -> void:
+	if estado != Estado.LISTA:
+		return
+	_auto_harvest_pendiente = retraso
+
 func _esta_protegida() -> bool:
 	for refugio in get_tree().get_nodes_in_group("refugio"):
 		if refugio.protege(global_position):
@@ -119,6 +163,19 @@ func _esta_protegida() -> bool:
 
 func _process(delta: float) -> void:
 	_pulse_time += delta
+
+	if _auto_harvest_pendiente >= 0.0:
+		_auto_harvest_pendiente -= delta
+		if _auto_harvest_pendiente <= 0.0:
+			_auto_harvest_pendiente = -1.0
+			if estado == Estado.LISTA:
+				var datos: Dictionary = Cultivos.DATA[tipo_cultivo]
+				var unidades: int = datos["units"]
+				Economia.ganar(unidades * int(datos["price"]))
+				Cultivos.registrar_venta(unidades)
+				_entrar_vacia()
+				# Auto-cosecha NO dispara otra cadena -- solo la cosecha manual dispara.
+
 	match estado:
 		Estado.CRECIENDO:
 			var grow_time: float = Cultivos.DATA[tipo_cultivo]["grow_time"]
@@ -150,12 +207,21 @@ func _process(delta: float) -> void:
 		Estado.REPARANDO:
 			_timer -= delta
 			if _timer <= 0.0:
-				estado = Estado.VACIA
-				estado_cambio.emit()
+				_entrar_vacia()
 	queue_redraw()
 
 func _draw() -> void:
 	var base_rect := Rect2(-40, -40, 80, 80)
+
+	if estado == Estado.BLOQUEADA:
+		draw_rect(base_rect, Color(0.4, 0.4, 0.42))
+		for i in range(-40, 41, 16):
+			draw_line(Vector2(i, -40), Vector2(i - 16, 40), Color(0.25, 0.25, 0.27), 2.0)
+		draw_rect(Rect2(-10, -6, 20, 16), Color(0.15, 0.15, 0.17))
+		draw_arc(Vector2(0, -8), 8.0, PI, TAU, 12, Color(0.15, 0.15, 0.17), 3.0)
+		draw_string(ThemeDB.fallback_font, Vector2(-38, -50), "Comprar ($%d)" % coste_desbloqueo)
+		return
+
 	var color_cultivo: Color = Cultivos.DATA[tipo_cultivo]["color"]
 
 	match estado:
@@ -172,6 +238,8 @@ func _draw() -> void:
 			var pulso: float = 0.5 + 0.5 * sin(_pulse_time * 4.0)
 			draw_rect(base_rect, Color(1.0, 0.85, 0.2, pulso * 0.25), false, 3.0)
 			draw_string(ThemeDB.fallback_font, Vector2(-38, -50), "¡%s listo!" % tipo_cultivo)
+			if _auto_harvest_pendiente >= 0.0:
+				draw_string(ThemeDB.fallback_font, Vector2(-38, 55), "Cosechadora: %.1fs" % _auto_harvest_pendiente)
 		Estado.PRE_ALERTA:
 			draw_rect(base_rect, Color(0.36, 0.26, 0.16))
 			_draw_planta(1.0 if _progreso >= 1.0 else _progreso, _progreso >= 1.0, color_cultivo)

@@ -4,22 +4,17 @@ extends Area2D
 # through /design-review round 5) feel coherent when played end to end?
 # Date: 2026-08-11
 #
-# Updated: severidad Severo/Reducido anadida (Core Rule 6), ahora que el
-# Refugio existe en la escena -- la primera version del spike solo tenia un
-# nivel de dano porque no habia estructura de proteccion que probar.
+# Updated: 3 tipos de cultivo (Trigo/Maiz/Fresa) via Cultivos autoload, en vez
+# de constantes fijas de trigo. Fresa respeta su tope de concurrencia (max 1
+# en vuelo en toda la granja) -- se corta deliberadamente la "Descansando"
+# post-cosecha de Fresa para no crecer mas el alcance de este spike.
 
 signal estado_cambio
 signal severidad_pendiente_cambio(severidad: String)
 
 enum Estado { VACIA, CRECIENDO, LISTA, PRE_ALERTA, AMENAZA_ACTIVA, DANADA, REPARANDO }
 
-const GROW_TIME: float = 6.0
-const SEED_COST: int = 2
-const HARVEST_UNITS: int = 3
-const SELL_PRICE_PER_UNIT: int = 5
-
 const PRE_ALERT_DURATION: float = 0.5
-const REACTION_WINDOW: float = 6.0
 const PREVENT_COST: int = 15
 const REPAIR_COST: int = 10
 const REPAIR_DOWNTIME_SEVERO: float = 4.0
@@ -27,9 +22,11 @@ const REPAIR_DOWNTIME_REDUCIDO: float = 2.0
 
 var estado: Estado = Estado.VACIA
 var severidad_actual: String = "Severo"
+var tipo_cultivo: String = "Trigo"
 var _progreso: float = 0.0
 var _timer: float = 0.0
 var _pulse_time: float = 0.0
+var _reaction_window: float = 6.0
 
 func _ready() -> void:
 	add_to_group("parcelas")
@@ -49,9 +46,14 @@ func iniciar_pre_alerta() -> void:
 func accion_disponible() -> String:
 	match estado:
 		Estado.VACIA:
-			return "Plantar ($%d)" % SEED_COST
+			var cultivo: String = Cultivos.cultivo_seleccionado
+			if cultivo == "Fresa" and Cultivos.fresa_en_vuelo:
+				return ""  # tope de concurrencia: max 1 Fresa en vuelo en la granja
+			var datos: Dictionary = Cultivos.DATA[cultivo]
+			return "Plantar %s ($%d)" % [cultivo, datos["seed_cost"]]
 		Estado.LISTA:
-			return "Cosechar (+$%d)" % (HARVEST_UNITS * SELL_PRICE_PER_UNIT)
+			var datos: Dictionary = Cultivos.DATA[tipo_cultivo]
+			return "Cosechar (+$%d)" % (int(datos["units"]) * int(datos["price"]))
 		Estado.AMENAZA_ACTIVA:
 			return "Prevenir ($%d)" % PREVENT_COST
 		Estado.DANADA:
@@ -62,15 +64,28 @@ func accion_disponible() -> String:
 func ejecutar_accion() -> bool:
 	match estado:
 		Estado.VACIA:
-			if not Economia.gastar(SEED_COST):
+			var cultivo: String = Cultivos.cultivo_seleccionado
+			if cultivo == "Fresa" and Cultivos.fresa_en_vuelo:
 				return false
+			var datos: Dictionary = Cultivos.DATA[cultivo]
+			if not Economia.gastar(datos["seed_cost"]):
+				return false
+			tipo_cultivo = cultivo
+			_reaction_window = datos["reaction_window"]
+			if cultivo == "Fresa":
+				Cultivos.fresa_en_vuelo = true
 			estado = Estado.CRECIENDO
 			_progreso = 0.0
 			estado_cambio.emit()
 			queue_redraw()
 			return true
 		Estado.LISTA:
-			Economia.ganar(HARVEST_UNITS * SELL_PRICE_PER_UNIT)
+			var datos: Dictionary = Cultivos.DATA[tipo_cultivo]
+			var unidades: int = datos["units"]
+			Economia.ganar(unidades * int(datos["price"]))
+			Cultivos.registrar_venta(unidades)
+			if tipo_cultivo == "Fresa":
+				Cultivos.fresa_en_vuelo = false
 			estado = Estado.VACIA
 			estado_cambio.emit()
 			queue_redraw()
@@ -86,6 +101,8 @@ func ejecutar_accion() -> bool:
 		Estado.DANADA:
 			if not Economia.gastar(REPAIR_COST):
 				return false
+			if tipo_cultivo == "Fresa":
+				Cultivos.fresa_en_vuelo = false
 			estado = Estado.REPARANDO
 			_timer = REPAIR_DOWNTIME_SEVERO if severidad_actual == "Severo" else REPAIR_DOWNTIME_REDUCIDO
 			estado_cambio.emit()
@@ -104,7 +121,8 @@ func _process(delta: float) -> void:
 	_pulse_time += delta
 	match estado:
 		Estado.CRECIENDO:
-			_progreso += delta / GROW_TIME
+			var grow_time: float = Cultivos.DATA[tipo_cultivo]["grow_time"]
+			_progreso += delta / grow_time
 			if _progreso >= 1.0:
 				_progreso = 1.0
 				estado = Estado.LISTA
@@ -113,7 +131,7 @@ func _process(delta: float) -> void:
 			_timer -= delta
 			if _timer <= 0.0:
 				estado = Estado.AMENAZA_ACTIVA
-				_timer = REACTION_WINDOW
+				_timer = _reaction_window
 				severidad_actual = "Reducido" if _esta_protegida() else "Severo"
 				estado_cambio.emit()
 		Estado.AMENAZA_ACTIVA:
@@ -138,6 +156,7 @@ func _process(delta: float) -> void:
 
 func _draw() -> void:
 	var base_rect := Rect2(-40, -40, 80, 80)
+	var color_cultivo: Color = Cultivos.DATA[tipo_cultivo]["color"]
 
 	match estado:
 		Estado.VACIA:
@@ -145,28 +164,28 @@ func _draw() -> void:
 			draw_string(ThemeDB.fallback_font, Vector2(-38, -50), "Tierra vacía")
 		Estado.CRECIENDO:
 			draw_rect(base_rect, Color(0.36, 0.26, 0.16))
-			_draw_planta(_progreso, false)
-			draw_string(ThemeDB.fallback_font, Vector2(-38, -50), "Creciendo %d%%" % int(_progreso * 100))
+			_draw_planta(_progreso, false, color_cultivo)
+			draw_string(ThemeDB.fallback_font, Vector2(-38, -50), "%s %d%%" % [tipo_cultivo, int(_progreso * 100)])
 		Estado.LISTA:
 			draw_rect(base_rect, Color(0.36, 0.26, 0.16))
-			_draw_planta(1.0, true)
+			_draw_planta(1.0, true, color_cultivo)
 			var pulso: float = 0.5 + 0.5 * sin(_pulse_time * 4.0)
 			draw_rect(base_rect, Color(1.0, 0.85, 0.2, pulso * 0.25), false, 3.0)
-			draw_string(ThemeDB.fallback_font, Vector2(-38, -50), "¡Listo!")
+			draw_string(ThemeDB.fallback_font, Vector2(-38, -50), "¡%s listo!" % tipo_cultivo)
 		Estado.PRE_ALERTA:
 			draw_rect(base_rect, Color(0.36, 0.26, 0.16))
-			_draw_planta(1.0 if _progreso >= 1.0 else _progreso, _progreso >= 1.0)
+			_draw_planta(1.0 if _progreso >= 1.0 else _progreso, _progreso >= 1.0, color_cultivo)
 			# Art bible: pre-alerta = parpadeo azul-blanco + contorno engrosado.
 			var parpadeo: float = 0.5 + 0.5 * sin(_pulse_time * 30.0)
 			draw_rect(base_rect, Color(0.6, 0.8, 1.0, parpadeo), false, 6.0)
 		Estado.AMENAZA_ACTIVA:
 			draw_rect(base_rect, Color(0.36, 0.26, 0.16))
-			_draw_planta(1.0 if _progreso >= 1.0 else _progreso, _progreso >= 1.0)
+			_draw_planta(1.0 if _progreso >= 1.0 else _progreso, _progreso >= 1.0, color_cultivo)
 			_draw_enjambre()
 			var restante: float = maxf(_timer, 0.0)
 			var color_preview: Color = Color(0.6, 0.85, 0.75) if severidad_actual == "Reducido" else Color(1.0, 0.6, 0.1)
 			draw_string(ThemeDB.fallback_font, Vector2(-38, -50), "¡AMENAZA! %.1fs (%s)" % [restante, severidad_actual])
-			var frac: float = restante / REACTION_WINDOW
+			var frac: float = restante / _reaction_window
 			draw_rect(Rect2(-40, 48, 80.0 * frac, 6), color_preview)
 		Estado.DANADA:
 			draw_rect(base_rect, Color(0.3, 0.28, 0.25))
@@ -177,11 +196,11 @@ func _draw() -> void:
 			draw_string(ThemeDB.fallback_font, Vector2(-38, -50), "Reparando %.1fs" % maxf(_timer, 0.0))
 			draw_circle(Vector2(0, 0), 10.0, Color(0.6, 0.85, 0.75, 0.6 + 0.2 * sin(_pulse_time * 3.0)))
 
-func _draw_planta(progreso: float, listo: bool) -> void:
+func _draw_planta(progreso: float, listo: bool, color_base: Color) -> void:
 	var altura: float = lerpf(4.0, 46.0, progreso)
 	var color_tallo := Color(0.3, 0.55, 0.15)
 	draw_line(Vector2(0, 20), Vector2(0, 20 - altura), color_tallo, 4.0)
-	var color_flor: Color = Color(0.98, 0.85, 0.15) if listo else Color(0.5, 0.8, 0.2)
+	var color_flor: Color = color_base if listo else color_base.lerp(Color(0.5, 0.8, 0.2), 0.5)
 	var radio_flor: float = lerpf(3.0, 12.0, progreso)
 	draw_circle(Vector2(0, 20 - altura), radio_flor, color_flor)
 

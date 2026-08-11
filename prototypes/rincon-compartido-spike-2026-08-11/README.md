@@ -24,9 +24,14 @@ Refugio)/Silo/expansión de terreno, más de un tipo de cultivo, la sensación
 táctil final en móvil (esto corre con teclado en escritorio).
 
 **Actualizado 2026-08-11**: se añadió el segundo jugador local (Pilar 1
-necesita 2 personas para probarse de verdad) y el Refugio (para poder ver la
+necesita 2 personas para probarse de verdad), el Refugio (para poder ver la
 distinción Severo/Reducido de Core Rule 6 en acción, incluyendo el preview en
-tiempo real que cambia si la severidad pendiente cambia durante la ventana).
+tiempo real que cambia si la severidad pendiente cambia durante la ventana),
+y los 3 tipos de cultivo (Trigo/Maíz/Fresa) con sus números reales de
+`farm-economy-system.md` — incluyendo el tope de concurrencia de Fresa (máx.
+1 en vuelo en toda la granja). **Los umbrales de desbloqueo están escalados
+hacia abajo** (100 unidades de trigo reales tardarían demasiado en un spike
+corto) — ver `scripts/cultivos.gd` para los números exactos usados aquí.
 
 ## Cómo correrlo
 
@@ -44,20 +49,28 @@ tiempo real que cambia si la severidad pendiente cambia durante la ventana).
 **Ambos jugadores comparten teclado en la misma pantalla** — no hay red real
 en este spike.
 
-| Debug | Tecla |
+| Debug / compartido | Tecla |
 |---|---|
+| Ciclar el cultivo seleccionado (Trigo → Maíz → Fresa, salta los bloqueados) | C |
 | Forzar un disparo de amenaza inmediato (evita esperar 25-90s) | T |
 
 ## Cómo jugar
 
-- Hay **2 parcelas de Trigo**. Camina hacia una parcela vacía (marrón) y pulsa
-  tu tecla de acción para plantar ($2). El HUD sobre tu jugador siempre
-  muestra qué acción va a ejecutar tu tecla — apunta a la parcela elegible
-  **más cercana** a ti, no a una prioridad fija (así quedó decidido en la
-  ronda 5 de revisión). Cada jugador tiene su propio objetivo independiente
-  según su propia posición.
-- Tras ~6s la parcela está Lista (brote amarillo, pulso dorado) — acércate y
-  pulsa tu tecla para cosechar (+$15 al pozo compartido).
+- Hay **2 parcelas**, vacías al inicio. El HUD (arriba) muestra qué cultivo
+  está seleccionado ahora mismo entre corchetes `[Trigo]` — pulsa **C** para
+  cambiarlo (Maíz y Fresa empiezan bloqueados, se desbloquean vendiendo
+  unidades — el HUD muestra cuántas faltan). Camina hacia una parcela vacía
+  (marrón) y pulsa tu tecla de acción para plantar el cultivo seleccionado.
+  El HUD sobre tu jugador siempre muestra qué acción va a ejecutar tu tecla —
+  apunta a la parcela elegible **más cercana** a ti, no a una prioridad fija
+  (así quedó decidido en la ronda 5 de revisión). Cada jugador tiene su
+  propio objetivo independiente según su propia posición.
+- Cada cultivo tiene su propio tiempo de crecimiento, costo y precio (Trigo:
+  barato y rápido; Maíz: intermedio; Fresa: caro, rápido, alta recompensa,
+  ventana de amenaza más corta — 4s en vez de 6s — y **solo puede haber una
+  Fresa en vuelo a la vez en toda la granja**, tal como especifica
+  `farm-economy-system.md`). Cuando esté Lista (brote de color, pulso
+  dorado) — acércate y pulsa tu tecla para cosechar.
 - En algún momento (o pulsa **T** para forzarlo ahora) una parcela elegible
   recibe una **amenaza**: 0.5s de parpadeo azul-blanco (pre-alerta, sin poder
   actuar todavía) seguido de una ventana de 6s con un enjambre de formas de
@@ -94,6 +107,9 @@ en este spike.
 - Con 2 jugadores compartiendo el mismo pozo: ¿negocian quién responde a la
   amenaza, o cada uno actúa por su cuenta sin coordinarse? ¿Alguno se
   frustra si el otro gasta del pozo compartido sin avisar?
+- ¿El tope de concurrencia de Fresa (máx. 1 en vuelo) se siente como una
+  restricción interesante, o como una limitación arbitraria/confusa cuando
+  el botón de plantar simplemente no aparece en la segunda parcela?
 
 ## Estado
 

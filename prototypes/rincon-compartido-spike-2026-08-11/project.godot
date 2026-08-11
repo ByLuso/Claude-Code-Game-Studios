@@ -12,6 +12,7 @@ config/features=PackedStringArray("4.7")
 [autoload]
 
 Economia="*res://scripts/economia.gd"
+Cultivos="*res://scripts/cultivos.gd"
 Amenazas="*res://scripts/amenazas.gd"
 
 [rendering]

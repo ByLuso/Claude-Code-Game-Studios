@@ -19,6 +19,7 @@ extends CharacterBody2D
 const RANGO_ACCION: float = 90.0
 
 var _prev_action_pressed: bool = false
+var _prev_cycle_pressed: bool = false
 var parcela_objetivo: Node = null
 
 var _key_up: Key
@@ -62,6 +63,14 @@ func _physics_process(_delta: float) -> void:
 	if pressed and not _prev_action_pressed and parcela_objetivo:
 		parcela_objetivo.ejecutar_accion()
 	_prev_action_pressed = pressed
+
+	# Seleccion de cultivo es compartida (un solo pozo, un solo control) --
+	# solo J1 escucha la tecla C para no ciclar dos veces en el mismo frame.
+	if player_id == 1:
+		var cycle_pressed := Input.is_physical_key_pressed(KEY_C)
+		if cycle_pressed and not _prev_cycle_pressed:
+			Cultivos.ciclar_seleccion()
+		_prev_cycle_pressed = cycle_pressed
 
 func _buscar_parcela_mas_cercana() -> Node:
 	var candidatas := get_tree().get_nodes_in_group("parcelas")

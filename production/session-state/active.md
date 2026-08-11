@@ -1,68 +1,78 @@
 # Session State
 
 ## Current Task
-Aplicados los 7 bloqueantes de la ronda 2 de `/design-review design/gdd/amenazas.md` (segundo
-NEEDS REVISION consecutivo, corrido en la misma sesión independiente que hizo la ronda 1). Sin
-desacuerdos esta vez — los 6 especialistas y el creative-director coincidieron en el diagnóstico.
-Pendiente: pushear, y correr `/design-review` una tercera vez para confirmar.
+Reconciliación de ramas: el usuario lanzó las rondas 3 y 4 de `/design-review design/gdd/amenazas.md`
+en sesiones nuevas que, en vez de trabajar sobre nuestra rama de trabajo
+(`claude/install-claude-code-global-sfpz62`), crearon sus propias ramas en GitHub. Encontré 2 ramas,
+las revisé, y reconcilié con el usuario. Pendiente: comitear y pushear.
 
-## Qué se corrigió en la ronda 2 (resumen para retomar si la sesión se corta)
+## Qué se encontró y cómo se resolvió
 
-**Patrón detectado por el creative-director**: todo lo que falló se agrupó en un solo eje — lo
-diferido a un spike (red o UX táctil) no tenía marcador visible ni criterio verificable con la misma
-fuerza en ambos casos. Los 7 bloqueantes:
-1. Banner de cabecera reescrito con paridad estructural — spike de red y spike de UX táctil, cada
-   uno con su propia viñeta y su propia Core Rule citada, en vez de mencionados juntos de pasada.
-2. Nuevo AC-17: coordinación cross-device excluida explícitamente del alcance de QA, mismo
-   tratamiento que AC-9/AC-16 (antes solo estaba declarada en prosa, sin paridad de AC).
-3. Default de pérdida de host precisado: "sin daño y SIN COBRO al pozo compartido" — la versión de
-   ronda 1 no aclaraba si heredaba el costo de Prevenir, ambigüedad real.
-4. Área táctil mínima del botón de acción contextual: 44×44pt/48×48dp — hallazgo que el propio
-   `creative-director` reconoció que se le perdió en la síntesis de la ronda 1.
-5. RNG de selección de entidad declarado inyectable (requisito de testabilidad para AC-1).
-6. AC-1 reescrito con umbral estadístico concreto (Chi-cuadrado, p>0.05) en vez de "no
-   sistemáticamente sesgada" (hand-waving prohibido por las reglas del proyecto).
-7. AC-6 con cláusula de alcance local explícita — se verifica sobre el estado en el host, la
-   sincronía cross-device queda diferida al spike de red, mismo tratamiento que AC-9.
+**`claude/amenazas-design-review-oq0jef`** — duplicado, descartado. Nace de un commit anterior al
+nuestro (antes de mi ronda 1), encontró los mismos 7 bloqueantes de forma independiente y los corrigió
+en su propia rama, pero nunca pasó por las rondas 2-4. Superada por nuestro trabajo. No se trajo nada.
 
-**Recomendados baratos también cerrados**: justificación del piso de 70s en `amenaza_interval`,
-limpieza de la fila de Open Questions ya obsoleta bajo el clamp, referencia cruzada del cooldown en
-Core Rule 2, nota de diseño deliberado en el RPC descartado, AC-5 con cobertura por evento
-(`visibility_changed`) en vez de muestreo de 3 puntos.
+**`claude/design-review-amenazas-r3-22v8ae`** — no duplicada, contenía las rondas 3 y 4 reales.
+Nace limpiamente de nuestro `f53fe04` (tras nuestras rondas 1-2). Contenía 4 decisiones de diseño
+reales que no habíamos discutido:
+1. **Player Fantasy reescrito** (3ª vez) — de "¡yo la tengo!" (reparto de tareas) a "reflejo
+   compartido y seguro mutuo" — más honesto con lo que Core Rule 2 + 7b producen.
+2. **Core Rule 7b nueva** — ventana de simultaneidad de 150ms del lado del host, fusiona el cobro si
+   ambos jugadores tocan casi a la vez, evita que la latencia decida quién "gana" siempre.
+3. **Free-riding reabierto** — mitigación de solo-visibilidad (Amenazas emite qué jugador respondió,
+   para el futuro Panel de contribución), sin tocar el pozo sin atribución del Pilar 1.
+4. **Core Rule 2 redefinida** — el cooldown ahora se mide desde la RESOLUCIÓN de la amenaza actual,
+   no desde el disparo (la versión anterior era una regla inerte: el piso de 25s del intervalo
+   siempre excedía los 15s de cooldown).
 
-**Dejado como Open Question rastreada, no resuelto (a propósito, no en silencio)**: criterio de
-salience del preview de severidad + pregunta de playtest, alcanzabilidad de t* dado el ritmo real de
-disparo, formalización del sesgo de downtime como invariante, ADR stub externo para AC-9/16/17.
+Presenté las 4 al usuario con Options→Decisión — **las 4 se aprobaron** (todas las recomendadas).
+Dado que esa rama ya era una continuación completa de nuestras rondas 1-2 (no solo estas 4 piezas),
+adopté su `amenazas.md` completo en vez de re-transcribir a mano — más confiable para un archivo de
+839 líneas con muchas piezas interconectadas (AC-1 a AC-22, contrato RPC dividido en 2 mensajes,
+invariante de `coste_no_prevenir` con piso relativo, Core Rule 4 con dependencia de Cámara/Viewport,
+etc.). Verifiqué que un bug real que yo mismo había encontrado independientemente (2 filas de Edge
+Cases contradictorias sobre desconexión) también estaba resuelto ahí, de forma más completa que mi
+propio arreglo.
+
+También creé `design/gdd/reviews/amenazas-review-log.md` con la entrada de ronda 4 que faltaba (la
+rama la tenía hasta ronda 3 solamente), más una nota final documentando esta reconciliación de ramas.
 
 ## Progress Checklist
-- [x] `/design-system amenazas` completo (sesión anterior)
-- [x] `/design-review` ronda 1 — NEEDS REVISION, 7 bloqueantes + 10 recomendados aplicados
-- [x] `/design-review` ronda 2 (misma sesión reviewer, re-review válido) — NEEDS REVISION, 7
-      bloqueantes nuevos + varios recomendados aplicados
+- [x] Rondas 1-2 de `/design-review` aplicadas (sesiones anteriores de este trabajo)
+- [x] Rama duplicada (`oq0jef`) identificada y descartada, sin acción necesaria
+- [x] Rama con rondas 3-4 reales (`r3-22v8ae`) revisada, 4 decisiones divergentes presentadas y
+      aprobadas por el usuario
+- [x] `amenazas.md` actualizado con el contenido completo de rondas 3-4
+- [x] `design/gdd/reviews/amenazas-review-log.md` creado, con la entrada de ronda 4 añadida
 - [ ] **Siguiente paso inmediato**: comitear y pushear
-- [ ] Correr `/design-review design/gdd/amenazas.md` una tercera vez (misma sesión reviewer sigue
-      siendo válida — nunca escribió el documento) para confirmar
-- [ ] Si aprueba: actualizar `systems-index.md` (fila #5) a "Approved"
+- [ ] Correr `/design-review` una quinta vez (ronda 5), **en sesión nueva de verdad** — dos rondas
+      consecutivas (3 y 4) se autocorrigieron en la misma sesión que revisó, rompiendo la
+      independencia revisor/autor; el propio `creative-director` de ronda 4 lo marcó como no-norma
+- [ ] Si aprueba en ronda 5: actualizar `systems-index.md` (fila #5) a "Approved"
 - [ ] Addendum al art bible con las 3 familias de forma (todavía pendiente, sin tocar en ninguna
       ronda de revisión)
-- [ ] Sistemas #1-4 (Networking, Input, Economía Compartida, Terreno y Parcelas) siguen sin GDD
-      propio — el banner del propio GDD ahora lo deja explícito con paridad estructural
+- [ ] Considerar limpiar (borrar) las 2 ramas de GitHub ahora que están reconciliadas/descartadas —
+      no se hizo todavía, pendiente de que el usuario lo pida explícitamente
 
 ## Key Decisions Carried Forward
-- Es válido reusar la misma sesión de `/design-review` para rondas sucesivas — nunca escribió el
-  documento, solo lo evalúa; de hecho es más eficiente porque ya tiene el contexto de hallazgos
-  previos. La única regla dura es no correrlo en la sesión que escribe/corrige (esta).
-- Ver "Qué se corrigió en la ronda 2" arriba para el detalle completo.
-- Patrón a vigilar en futuras rondas: los items "diferidos a un spike" necesitan la misma
-  visibilidad/rigor que los items resueltos directamente — no basta con mencionarlos, necesitan su
-  propio AC excluido y su propia línea en cualquier banner de estado.
+- **Lección de proceso nueva**: cuando se lanzan sesiones de revisión en ventanas nuevas de Claude
+  Code, verificar primero si terminaron en su propia rama de git en vez de la rama de trabajo — no
+  asumir que "sesión nueva" significa "mismos commits, misma rama."
+- Ver "Qué se encontró y cómo se resolvió" arriba para el detalle completo de las 4 decisiones de
+  diseño reconciliadas.
+- El patrón de "corregir en la misma sesión que revisa" ya ocurrió 2 veces (rondas 3 y 4), ambas por
+  petición/elección explícita del usuario en esas sesiones, no por decisión del skill. El
+  `creative-director` de ronda 4 recomienda no dejar que se vuelva la norma — la ronda 5 debe ser una
+  revisión pura, sin autocorrección en la misma sesión.
 
 ## Files Modified This Session (sin comitear)
-- `design/gdd/amenazas.md` — todas las correcciones de la ronda 2
+- `design/gdd/amenazas.md` — reemplazado con el contenido reconciliado de rondas 1-4
+- `design/gdd/reviews/amenazas-review-log.md` — nuevo, con entrada de ronda 4 añadida + nota de
+  reconciliación de ramas
 - `production/session-state/active.md` — este archivo
 
 ## Current Phase
-Revisión ronda 2 de `amenazas.md` completamente aplicada, sin comitear todavía. Si la sesión se
-interrumpe: leer este archivo, confirmar con `git status` si ya se comiteó, y si no, comitear/pushear
-antes de nada más. El siguiente paso real (fuera de esta sesión) es correr `/design-review` una
-tercera vez en la misma sesión reviewer.
+Reconciliación de ramas completa, sin comitear todavía. Si la sesión se interrumpe: leer este
+archivo, confirmar con `git status` si ya se comiteó, y si no, comitear/pushear antes de nada más. El
+siguiente paso real (fuera de esta sesión) es correr `/design-review` una quinta vez, en una sesión
+genuinamente nueva que solo revise, sin autocorregir.

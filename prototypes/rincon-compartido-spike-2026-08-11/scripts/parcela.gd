@@ -3,8 +3,13 @@ extends Area2D
 # Question: Does the full loop (crop + shared economy + Amenazas as designed
 # through /design-review round 5) feel coherent when played end to end?
 # Date: 2026-08-11
+#
+# Updated: severidad Severo/Reducido anadida (Core Rule 6), ahora que el
+# Refugio existe en la escena -- la primera version del spike solo tenia un
+# nivel de dano porque no habia estructura de proteccion que probar.
 
 signal estado_cambio
+signal severidad_pendiente_cambio(severidad: String)
 
 enum Estado { VACIA, CRECIENDO, LISTA, PRE_ALERTA, AMENAZA_ACTIVA, DANADA, REPARANDO }
 
@@ -17,9 +22,11 @@ const PRE_ALERT_DURATION: float = 0.5
 const REACTION_WINDOW: float = 6.0
 const PREVENT_COST: int = 15
 const REPAIR_COST: int = 10
-const REPAIR_DOWNTIME: float = 4.0
+const REPAIR_DOWNTIME_SEVERO: float = 4.0
+const REPAIR_DOWNTIME_REDUCIDO: float = 2.0
 
 var estado: Estado = Estado.VACIA
+var severidad_actual: String = "Severo"
 var _progreso: float = 0.0
 var _timer: float = 0.0
 var _pulse_time: float = 0.0
@@ -80,12 +87,18 @@ func ejecutar_accion() -> bool:
 			if not Economia.gastar(REPAIR_COST):
 				return false
 			estado = Estado.REPARANDO
-			_timer = REPAIR_DOWNTIME
+			_timer = REPAIR_DOWNTIME_SEVERO if severidad_actual == "Severo" else REPAIR_DOWNTIME_REDUCIDO
 			estado_cambio.emit()
 			queue_redraw()
 			return true
 		_:
 			return false
+
+func _esta_protegida() -> bool:
+	for refugio in get_tree().get_nodes_in_group("refugio"):
+		if refugio.protege(global_position):
+			return true
+	return false
 
 func _process(delta: float) -> void:
 	_pulse_time += delta
@@ -101,9 +114,17 @@ func _process(delta: float) -> void:
 			if _timer <= 0.0:
 				estado = Estado.AMENAZA_ACTIVA
 				_timer = REACTION_WINDOW
+				severidad_actual = "Reducido" if _esta_protegida() else "Severo"
 				estado_cambio.emit()
 		Estado.AMENAZA_ACTIVA:
 			_timer -= delta
+			# Core Rule 6: la severidad pendiente se evalua en tiempo real, no
+			# solo al momento del disparo -- el jugador puede ver el preview
+			# cambiar si entra/sale de rango del Refugio durante la ventana.
+			var nueva_severidad: String = "Reducido" if _esta_protegida() else "Severo"
+			if nueva_severidad != severidad_actual:
+				severidad_actual = nueva_severidad
+				severidad_pendiente_cambio.emit(severidad_actual)
 			if _timer <= 0.0:
 				# Core Rule 6: sin prevencion, pasa a estado de dano.
 				estado = Estado.DANADA
@@ -113,11 +134,6 @@ func _process(delta: float) -> void:
 			if _timer <= 0.0:
 				estado = Estado.VACIA
 				estado_cambio.emit()
-	# LISTA y otros estados con animaciones de pulso (borde dorado, brillo de
-	# Reparando) tambien necesitan redraw continuo -- se llama incondicional
-	# para todos los estados en vez de repetir la llamada en cada rama (bug
-	# encontrado en revision propia: LISTA no tenia case aqui, su pulso nunca
-	# se habria animado).
 	queue_redraw()
 
 func _draw() -> void:
@@ -148,13 +164,14 @@ func _draw() -> void:
 			_draw_planta(1.0 if _progreso >= 1.0 else _progreso, _progreso >= 1.0)
 			_draw_enjambre()
 			var restante: float = maxf(_timer, 0.0)
-			draw_string(ThemeDB.fallback_font, Vector2(-38, -50), "¡AMENAZA! %.1fs" % restante)
+			var color_preview: Color = Color(0.6, 0.85, 0.75) if severidad_actual == "Reducido" else Color(1.0, 0.6, 0.1)
+			draw_string(ThemeDB.fallback_font, Vector2(-38, -50), "¡AMENAZA! %.1fs (%s)" % [restante, severidad_actual])
 			var frac: float = restante / REACTION_WINDOW
-			draw_rect(Rect2(-40, 48, 80.0 * frac, 6), Color(1.0, 0.6, 0.1))
+			draw_rect(Rect2(-40, 48, 80.0 * frac, 6), color_preview)
 		Estado.DANADA:
 			draw_rect(base_rect, Color(0.3, 0.28, 0.25))
 			_draw_planta_danada()
-			draw_string(ThemeDB.fallback_font, Vector2(-38, -50), "Dañada")
+			draw_string(ThemeDB.fallback_font, Vector2(-38, -50), "Dañada (%s)" % severidad_actual)
 		Estado.REPARANDO:
 			draw_rect(base_rect, Color(0.3, 0.28, 0.25))
 			draw_string(ThemeDB.fallback_font, Vector2(-38, -50), "Reparando %.1fs" % maxf(_timer, 0.0))

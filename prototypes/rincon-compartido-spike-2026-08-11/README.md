@@ -17,12 +17,16 @@ Amenazas (botón único que apunta a la entidad más cercana, pre-alerta +
 ventana con severidad, secuenciación sin cooldown numérico) se traduce bien a
 algo jugable.
 
-**Explícitamente NO prueba**: multijugador/red real (un solo jugador local —
-la capa de red de `amenazas.md` sigue ⚠ Provisional, un prototipo local no
-puede validarla), Severo/Reducido (no hay estructura Refugio en este spike,
-solo un nivel de daño), Máquinas/Infraestructura/Silo/expansión de terreno,
-más de un tipo de cultivo, la sensación táctil final en móvil (esto corre con
-teclado en escritorio).
+**Explícitamente NO prueba**: red real (2 jugadores locales, mismo teclado,
+mismo dispositivo — la capa de red de `amenazas.md` sigue ⚠ Provisional, un
+prototipo local no puede validarla), Máquinas/Infraestructura (más allá del
+Refugio)/Silo/expansión de terreno, más de un tipo de cultivo, la sensación
+táctil final en móvil (esto corre con teclado en escritorio).
+
+**Actualizado 2026-08-11**: se añadió el segundo jugador local (Pilar 1
+necesita 2 personas para probarse de verdad) y el Refugio (para poder ver la
+distinción Severo/Reducido de Core Rule 6 en acción, incluyendo el preview en
+tiempo real que cambia si la severidad pendiente cambia durante la ventana).
 
 ## Cómo correrlo
 
@@ -32,28 +36,45 @@ teclado en escritorio).
 
 ## Controles
 
-| Acción | Tecla |
+| Acción | Jugador 1 | Jugador 2 |
+|---|---|---|
+| Moverse | WASD | Flechas |
+| Acción contextual (plantar/cosechar/prevenir/reparar) | E | Enter |
+
+**Ambos jugadores comparten teclado en la misma pantalla** — no hay red real
+en este spike.
+
+| Debug | Tecla |
 |---|---|
-| Moverse | WASD o flechas |
-| Acción contextual (plantar/cosechar/prevenir/reparar) | ESPACIO |
-| Forzar un disparo de amenaza inmediato (debug, evita esperar 25-90s) | T |
+| Forzar un disparo de amenaza inmediato (evita esperar 25-90s) | T |
 
 ## Cómo jugar
 
 - Hay **2 parcelas de Trigo**. Camina hacia una parcela vacía (marrón) y pulsa
-  ESPACIO para plantar ($2). El HUD sobre tu jugador siempre muestra qué acción
-  va a ejecutar ESPACIO — apunta a la parcela elegible **más cercana** a ti,
-  no a una prioridad fija (así quedó decidido en la ronda 5 de revisión).
-- Tras ~6s la parcela está Lista (brote amarillo, pulso dorado) — pulsa
-  ESPACIO cerca para cosechar (+$15 al pozo compartido).
+  tu tecla de acción para plantar ($2). El HUD sobre tu jugador siempre
+  muestra qué acción va a ejecutar tu tecla — apunta a la parcela elegible
+  **más cercana** a ti, no a una prioridad fija (así quedó decidido en la
+  ronda 5 de revisión). Cada jugador tiene su propio objetivo independiente
+  según su propia posición.
+- Tras ~6s la parcela está Lista (brote amarillo, pulso dorado) — acércate y
+  pulsa tu tecla para cosechar (+$15 al pozo compartido).
 - En algún momento (o pulsa **T** para forzarlo ahora) una parcela elegible
   recibe una **amenaza**: 0.5s de parpadeo azul-blanco (pre-alerta, sin poder
   actuar todavía) seguido de una ventana de 6s con un enjambre de formas de
   gota/diamante suaves (no triángulos — ver art bible) y una barra de tiempo
-  restante. Acércate y pulsa ESPACIO para **Prevenir** ($15, instantáneo).
-- Si no llegas a tiempo, la parcela queda **Dañada** — pulsa ESPACIO para
-  **Reparar** ($10), que tarda 4s (icono de reparación pulsando) antes de
-  volver a tierra vacía.
+  restante. Cualquiera de los dos jugadores puede acercarse y pulsar su tecla
+  para **Prevenir** ($15, instantáneo, del pozo compartido).
+- El anillo verde-menta es el **Refugio** — protege la parcela de abajo a la
+  izquierda (Parcela1), pero NO la de la derecha (Parcela2). Mientras la
+  ventana de amenaza está activa, el texto y el color de la barra de tiempo
+  muestran en tiempo real si la parcela **resolvería como Reducido** (menta,
+  protegida) o **Severo** (ámbar, sin protección) — este preview en vivo
+  (Core Rule 6) es uno de los hallazgos centrales que varias rondas de
+  revisión corrigieron.
+- Si nadie previene a tiempo, la parcela queda **Dañada** (con su severidad
+  ya fijada) — pulsa tu tecla para **Reparar** ($10). El downtime varía:
+  **2s si fue Reducido, 4s si fue Severo** — reparar algo que sí estaba
+  protegido es más rápido.
 - Solo puede haber **una amenaza activa a la vez** en todo el mapa —
   verificable jugando: nunca vas a ver el parpadeo azul-blanco en las 2
   parcelas simultáneamente.
@@ -65,12 +86,14 @@ teclado en escritorio).
 - ¿La ventana de 6s (0.5s de pre-alerta + 6s de reacción) da tiempo suficiente
   para notar la amenaza y decidir, o se siente injustamente corta?
 - ¿Vale la pena pagar $15 por Prevenir vs. dejar que dañe y pagar $10 +
-  esperar 4s de Reparar? ¿La decisión se siente real o obvia?
+  esperar 2-4s de Reparar? ¿La decisión se siente real o obvia?
 - ¿El enjambre de gota/diamante se lee como "presta atención a esto", o
   todavía da una sensación de amenaza/combate que el diseño quiere evitar?
-- Con solo 1 jugador, ¿el loop se siente vacío/lento sin nadie con quién
-  coordinar? (Esperado — el concept prototype anterior ya probó la parte
-  cooperativa; esto es deliberadamente de un jugador.)
+- ¿El preview de severidad en tiempo real (color/texto cambiando según estás
+  dentro o fuera del Refugio) se nota, o pasa desapercibido bajo presión?
+- Con 2 jugadores compartiendo el mismo pozo: ¿negocian quién responde a la
+  amenaza, o cada uno actúa por su cuenta sin coordinarse? ¿Alguno se
+  frustra si el otro gasta del pozo compartido sin avisar?
 
 ## Estado
 

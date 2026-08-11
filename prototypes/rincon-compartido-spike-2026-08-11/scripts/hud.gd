@@ -10,7 +10,7 @@ extends CanvasLayer
 func _ready() -> void:
 	Economia.dinero_cambio.connect(_on_dinero_cambio)
 	_on_dinero_cambio(Economia.dinero)
-	ayuda_label.text = "WASD/flechas mover, ESPACIO accion contextual. T = forzar amenaza (debug)."
+	ayuda_label.text = "J1: WASD mover, E accion.  J2: flechas mover, ENTER accion.  T = forzar amenaza (debug). El anillo verde es el Refugio (protege la parcela de abajo-izquierda)."
 
 func _on_dinero_cambio(nuevo_monto: int) -> void:
 	dinero_label.text = "Pozo compartido: $%d" % nuevo_monto

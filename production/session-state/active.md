@@ -1,60 +1,53 @@
 # Session State
 
 ## Current Task
-Construido un spike de media-producción en Godot (`prototypes/rincon-compartido-spike-2026-08-11/`)
-que muestra el loop actualizado (cultivo + economía compartida + Amenazas) reflejando las 5 rondas de
-`/design-review` sobre `design/gdd/amenazas.md`. Pendiente: comitear/pushear, y que el usuario lo
-corra en Godot 4.7.1 y reporte errores/observaciones (Phase 6 del skill `/prototype`, modo spike).
+Spike de Godot (`prototypes/rincon-compartido-spike-2026-08-11/`) extendido en 3 pasadas seguidas a
+petición directa del usuario ("continua haciendo el juego"), sin pausar a esperar el playtest. Todo
+comiteado y pusheado. Pendiente: que el usuario lo corra y reporte, o que pida seguir extendiendo.
 
-## Qué se construyó
+## Qué existe ahora en el spike
 
-Reusé el patrón ya probado del concept prototype anterior (`rincon-compartido-concept/`, veredicto
-PROCEED) — mismas APIs de Godot (CharacterBody2D, Area2D, `_draw()` con `draw_rect`/`draw_circle`/
-`draw_string`+`ThemeDB.fallback_font`, autoloads, señales) para minimizar riesgo de errores nuevos.
+1. **Base** (commit `41343a7`): 2 parcelas de Trigo, 1 jugador local, Amenazas completo (pre-alerta,
+   ventana, botón único apunta-a-más-cercana, Prevenir/Reparar, exclusión mutua por secuenciación).
+2. **+2º jugador y Refugio** (commit `b98f6ca`): Jugador2 (flechas+Enter, matching el concept
+   prototype original), Refugio que protege Parcela1 pero no Parcela2 — permite probar Severo/Reducido
+   de verdad, incluyendo el preview de severidad en tiempo real (Core Rule 6).
+3. **+3 cultivos** (commit `b5fde28`): Trigo/Maíz/Fresa con números reales de
+   `farm-economy-system.md` 3.2, desbloqueo progresivo (umbrales escalados hacia abajo para un spike
+   corto, documentado como tal), tope de concurrencia de Fresa (máx. 1 en vuelo en toda la granja).
 
-**Alcance** (acordado con el usuario antes de construir): 2 parcelas de Trigo, pozo de dinero
-compartido (un solo jugador local, sin red real), y el mecanismo de Amenazas completo tal como quedó
-tras la ronda 5 — pre-alerta 0.5s azul-blanco, ventana de 6s con enjambre de gota/diamante (no
-triángulos) y barra de tiempo, botón único de acción contextual que apunta a la parcela elegible MÁS
-CERCANA (no una prioridad fija — decisión de ronda 5), Prevenir/Reparar, y exclusión mutua de amenazas
-por secuenciación (sin `cooldown_global`, coincide con el Core Rule 2 simplificado de ronda 5).
-Explícitamente fuera: Severo/Reducido (no hay Refugio), Máquinas/Infraestructura/Silo, más de un
-cultivo, red/multijugador real.
-
-**Bug real encontrado y corregido en revisión propia antes de entregar**: el estado LISTA tenía un
-borde pulsante animado en `_draw()`, pero `_process()` no llamaba `queue_redraw()` en ese estado — el
-pulso nunca se habría visto. Corregido moviendo `queue_redraw()` a una llamada incondicional al final
-de `_process()`.
-
-Tecla de debug añadida (**T**) para forzar un disparo de amenaza inmediato, ya que el intervalo real
-(25-90s según la fórmula `amenaza_interval`) sería demasiado lento para un playtest corto.
+Controles: J1 = WASD+E, J2 = flechas+Enter, C = ciclar cultivo (compartido), T = forzar amenaza
+(debug, evita esperar el intervalo real de 25-90s).
 
 ## Progress Checklist
-- [x] Alcance del spike acordado con el usuario (modo, camino Engine/Godot, 3 bullets de alcance)
-- [x] Proyecto Godot completo escrito: `project.godot`, `Main.tscn`, 5 scripts
-- [x] Revisión propia del código encontró y corrigió 1 bug real (redraw de LISTA)
-- [x] README.md con hipótesis, controles, cómo jugar, qué observar
-- [x] `prototypes/index.md` actualizado con la fila de este spike (estado "En progreso")
-- [ ] **Siguiente paso inmediato**: comitear y pushear
-- [ ] El usuario corre el proyecto en Godot 4.7.1, reporta errores o confirma que corre
-- [ ] Si corre: el usuario juega y responde qué observó (Phase 6 del skill, modo spike — sin
-      cuestionario formal de PROCEED/PIVOT/KILL, solo "¿respondió la pregunta? SÍ/NO y por qué")
-- [ ] Escribir `SPIKE-NOTE.md` con el resultado una vez el usuario reporte
-- [ ] Actualizar `prototypes/index.md` con el veredicto final del spike
+- [x] Spike base construido y pusheado
+- [x] 2º jugador + Refugio añadidos y pusheados
+- [x] 3 cultivos añadidos y pusheados
+- [ ] **El usuario todavía no lo ha corrido** — sigue sin verificación real de ejecución (no hay
+      Godot instalado en este entorno; todo el código se revisó a mano, no se ejecutó)
+- [ ] Si el usuario pide seguir sin probar primero: candidatos siguientes son Máquinas
+      (Sembradora/Cosechadora automáticas), expansión de terreno (más de 2 parcelas), o el Silo con
+      capacidad — todos en `farm-economy-system.md` con números reales listos para usar
+- [ ] Escribir `SPIKE-NOTE.md` una vez el usuario reporte un resultado real
+- [ ] Actualizar `prototypes/index.md` con el veredicto final
 
 ## Key Decisions Carried Forward
-- No pude ejecutar Godot en este entorno (no está instalado) — el código no está verificado en
-  ejecución real, solo por revisión manual cuidadosa. Fiabilidad esperada del camino Engine per el
-  skill `/prototype`: ~50-60% a la primera, 2-4 rondas de iteración son normales, no una falla.
-- Reusar las APIs ya probadas del concept prototype anterior fue deliberado para reducir superficie de
-  error nueva, dado que no puedo probar el código yo mismo.
+- El usuario prefiere que se siga construyendo directamente en vez de pausar a cada rato a pedir
+  confirmación — mientras el trabajo se quede dentro de `prototypes/` (desechable, bajo riesgo,
+  reversible), tiene sentido seguir el ritmo sin AskUserQuestion por cada pieza añadida.
+- Ningún código de este spike se ha ejecutado nunca — revisar con cuidado antes de seguir apilando
+  más funcionalidad encima, el riesgo de un bug oculto crece con cada pasada sin verificación real.
+- Reusar patrones ya probados (del concept prototype original) sigue siendo la estrategia para
+  minimizar riesgo dado que no puedo ejecutar Godot aquí.
 
-## Files Modified This Session (sin comitear)
-- `prototypes/rincon-compartido-spike-2026-08-11/` — proyecto Godot completo, nuevo
-- `prototypes/index.md` — fila nueva añadida
+## Files Modified This Session
+- `prototypes/rincon-compartido-spike-2026-08-11/` — todo el proyecto, 3 pasadas de commits
+- `prototypes/index.md`
 - `production/session-state/active.md` — este archivo
 
+Todo comiteado y pusheado hasta el commit `b5fde28`.
+
 ## Current Phase
-Spike construido, sin comitear todavía. Si la sesión se interrumpe: leer este archivo, confirmar con
-`git status` si ya se comiteó, y si no, comitear/pushear antes de nada más. El siguiente paso real es
-que el usuario abra el proyecto en Godot y reporte qué pasó.
+Spike en buen punto de pausa natural (base + co-op + severidad + variedad de cultivos, todo
+funcionalmente coherente sobre el papel). Esperando que el usuario lo corra, o que pida seguir
+extendiendo sin probar primero.

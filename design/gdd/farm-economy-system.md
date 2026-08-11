@@ -851,6 +851,13 @@ detalle y la recomendación.
   **bloqueante antes de `/create-architecture`**): el gesto de mantener 0.4s (3.4) y el mecanismo
   para que un jugador vea el estado de su compañero (canal de venta, compras en curso) quedan
   provisionales hasta ese spike — ver notas inline en 3.4.
+- **Depende de** `design/gdd/amenazas.md` (añadido tras la sesión que extrajo ese framework
+  genérico, 2026-08-10) — la mecánica de plaga descrita en 3.5 es ahora la instancia de referencia
+  de ese framework para el recurso cultivo; el cooldown global de 15s (4.3), los valores de downtime
+  de 4.0s/2.0s (4.6), y la ventana de reacción de 4-6s por cultivo (3.2) son los valores que
+  `amenazas.md` registra como ya bloqueados y no deben divergir sin flaggear el conflicto primero.
+  **Dependencia bidireccional confirmada**: `amenazas.md` lista a Cultivos en su tabla de
+  Dependencies como dependiente de Amenazas.
 
 ## 7. Tuning Knobs
 

@@ -191,7 +191,7 @@ formulas:
     revised: ""
 
   - name: plague_interval
-    status: active
+    status: deprecated
     source: design/gdd/farm-economy-system.md
     referenced_by:
       - design/gdd/farm-economy-system.md
@@ -199,15 +199,62 @@ formulas:
       - num_parcelas_activas
     output_range: [25, 63]   # segundos: intervalo_min a 0 parcelas = 25s, intervalo_max a 6 parcelas = 63s
     expression: "intervalo_min = 25 + (num_parcelas_activas * 3); intervalo_max = 45 + (num_parcelas_activas * 3)"
-    notes: "This is currently scoped to crop plots only (Creciendo/Lista state,
-      valid for 0-6 plots per farm-economy-system.md Formulas 4.3). game-concept.md's
-      elevator pitch names 3 distinct threat types across the 3 resources --
-      plagas (crops), derrumbes/collapses (presumably madera/wood), incendios/fires
-      (presumably minerales/mineral) -- so a future threats/amenazas GDD will need
-      its own interval formula per threat type. Whether they should share this same
-      shape (linear scaling with active-entity count + a global cooldown, see
-      plague_cooldown_global constant below) or diverge is an open design question,
-      not yet decided anywhere."
+    notes: "DEPRECATED 2026-08-10: superseded by amenaza_interval in
+      design/gdd/amenazas.md, which generalizes this exact expression to pool
+      entities across ALL resource types (crops + future madera/mineral), not
+      just crop plots. The crop-only count (num_parcelas_activas) is no longer
+      an accurate measurement once madera/minerales entities join the shared
+      threat pool -- kept here only for historical reference to how
+      amenaza_interval was derived. Do not use this entry for new work; use
+      amenaza_interval instead."
+    added: 2026-08-10
+    revised: 2026-08-10
+
+  - name: amenaza_interval
+    status: active
+    source: design/gdd/amenazas.md
+    referenced_by:
+      - design/gdd/amenazas.md
+    variables:
+      - num_entidades_amenazables
+    output_range: [25, null]   # segundos: sin tope superior, generalizado desde plague_interval
+    expression: "intervalo_min = 25 + (num_entidades_amenazables * 3); intervalo_max = 45 + (num_entidades_amenazables * 3)"
+    notes: "Generalizes plague_interval (now deprecated) from crop-plot-only
+      counting to a pooled count across ALL resource types (crops + future
+      madera/mineral nodes), per amenazas.md Core Rule 1 (single shared
+      selection pool). Same expression shape, deliberately widened output
+      range -- the old [25,63] cap came from Cultivos' own 6-plot hard limit,
+      not from anything inherent to the formula. Flagged risk (amenazas.md
+      Formulas section): once madera/minerales exist, num_entidades_amenazables
+      could realistically reach 15-20+, pushing the interval past 90-100s --
+      future GDDs for those resources should re-validate against this before
+      finalizing their own entity caps."
+    added: 2026-08-10
+    revised: ""
+
+  - name: coste_no_prevenir
+    status: active
+    source: design/gdd/amenazas.md
+    referenced_by:
+      - design/gdd/amenazas.md
+    variables:
+      - costo_prevenir
+      - valor_en_riesgo
+      - t_progreso
+      - costo_reparar
+      - costo_reinicio
+    output_range: [0, null]   # dolares, sin tope superior definido -- depende de cada instancia de recurso
+    expression: "coste_no_prevenir = (valor_en_riesgo * t_progreso) + costo_reparar + costo_reinicio"
+    notes: "Partial EV formula for the Prevenir-vs-Reparar trade-off (Pilar 5),
+      generalized from the crop-specific EV table already approved in
+      farm-economy-system.md Apendice D.2. Deliberately excludes downtime --
+      monetizing time would require inventing an unbacked $/s value-of-time
+      constant, so downtime stays a separate qualitative axis each resource
+      instance validates in its own Tuning Knobs/Edge Cases. Future madera/
+      minerales GDDs should plug their own values into this formula (not
+      re-derive a new one) to confirm prevent-vs-repair stays a genuine choice,
+      not a dominant strategy -- see amenazas.md Acceptance Criteria AC-11 for
+      a worked example."
     added: 2026-08-10
     revised: ""
 
@@ -265,19 +312,24 @@ constants:
 
   - name: plague_cooldown_global
     status: active
-    source: design/gdd/farm-economy-system.md
+    source: design/gdd/amenazas.md   # was: design/gdd/farm-economy-system.md before 2026-08-10 (this session's later edit)
     referenced_by:
       - design/gdd/farm-economy-system.md
+      - design/gdd/amenazas.md
     value: 15
     unit: seconds
     added: 2026-08-10
-    revised: ""
-    notes: "Minimum time between plague triggers across DIFFERENT plots (not
-      per-plot -- see plague_interval formula above for the per-plot timer).
-      Safe tuning range per farm-economy-system.md Tuning Knobs: 10-20s. A future
-      amenazas/threats GDD covering derrumbes (wood) and incendios (mineral) should
-      decide whether this cooldown is per-resource-type or global across the whole
-      shared operation -- not yet decided."
+    revised: 2026-08-10
+    notes: "Minimum time between ANY threat trigger across ALL threat types
+      (plaga/derrumbe/incendio combined, not per-type) and across DIFFERENT
+      entities -- generalized in amenazas.md Core Rule 2, per an explicit user
+      decision to share one cooldown rather than give each threat type its own
+      independent timer, to keep player cognitive load to 'one alert rhythm.'
+      This also structurally guarantees only one threat can ever be active on
+      screen at once. Source moved from farm-economy-system.md to amenazas.md
+      since the generic framework is now the fact's true owner -- value
+      unchanged (still 15s), farm-economy-system.md's plague instance simply
+      inherits it. Safe tuning range: 10-20s (amenazas.md Tuning Knobs)."
 
   - name: repair_downtime_marchita
     status: active

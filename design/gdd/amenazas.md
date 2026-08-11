@@ -1,15 +1,19 @@
 # Amenazas (framework genérico)
 
-> **Status**: Designed — hallazgos de `/design-review` ronda 1 (NEEDS REVISION) aplicados en esta
-> sesión; pendiente de re-revisión independiente en sesión nueva para confirmar
+> **Status**: Designed — hallazgos de `/design-review` rondas 1 y 2 (ambas NEEDS REVISION) aplicados
+> en esta sesión; pendiente de re-revisión independiente (ronda 3) en sesión nueva para confirmar
 > **Author**: usuario + agentes
 > **Last Updated**: 2026-08-11
 > **Implements Pillar**: Pilar 5 (El riesgo empuja a prepararse)
 > **Creative Director Review (CD-GDD-ALIGN)**: omitido — modo Lean (no es phase-gate en este modo)
 >
-> 🚧 **NO implementation-ready** — depende de 2 spikes técnicos sin ejecutar (red, UX táctil) y de 3
-> sistemas Foundation sin GDD propio (Networking, Input, Economía Compartida). Ver Dependencies y
-> Core Rules 9/11.
+> 🚧 **NO implementation-ready** — bloqueado por 2 dependencias igualmente duras, ninguna resuelta
+> (corregido en `/design-review` ronda 2 para darles paridad estructural, antes lumped juntas):
+> - **Spike de red** (bloquea Core Rule 9, autoridad de host): sin ejecutar.
+> - **Spike de UX táctil** (bloquea Core Rule 11, coordinación cross-device — canal "yo la tengo" y
+>   fallback fuera de pantalla): sin ejecutar.
+> Además, 3 sistemas Foundation (Networking, Input, Economía Compartida) siguen sin GDD propio. Ver
+> Dependencies.
 
 ## Overview
 
@@ -57,7 +61,8 @@ una pérdida permanente ni una vergüenza. El fallo es fricción temporal, no ca
 2. **Cooldown global único**: tras cualquier disparo, ningún otro disparo — de cualquier tipo (plaga,
    derrumbe, incendio) — puede ocurrir hasta que pase el cooldown global (constante, 15s actual). Por
    construcción, esto hace estructuralmente imposible que dos amenazas estén activas a la vez, sin
-   necesitar una regla de desempate.
+   necesitar una regla de desempate. *(Declarado como trade-off revisable — ver Open Questions, fila
+   "Cooldown global único... declarado como trade-off revisable".)*
 3. **Pre-alerta**: 0.5s de aviso (parpadeo azul-blanco + contorno de forma engrosado, art bible §7.5)
    antes de que el telegraph físico aparezca — un instante de anticipación que todavía no cuenta como
    ventana de reacción.
@@ -142,6 +147,12 @@ n=30, más de 2 minutos entre disparos") era un defecto presente, no un riesgo f
 ([systems-designer]). El techo se activa en n=15 (donde `45+3·15=90`), manteniendo el mismo spread
 de 20s entre min/max que la fórmula sin techo tenía en todo su rango.
 
+**Justificación del piso de 70s** (añadido en ronda 2, el 90 ya tenía justificación pero el 70 no):
+el piso `intervalo_min=70` no es arbitrario — preserva el mismo spread de 20s que
+`intervalo_max-intervalo_min` tiene en todo el rango sin techo. Si solo se limitara el máximo a 90
+sin tocar el mínimo, el spread se comprimiría a medida que n crece, cambiando el ritmo de
+variabilidad percibida justo en la zona de mayor población de entidades.
+
 **Nota sobre elegibilidad vs. conteo** (nuance heredada de `farm-economy-system.md` §4.3, no
 capturada en la generalización original): una entidad Lista pero bloqueada por almacenamiento lleno
 (silo/equivalente) cuenta hacia `num_entidades_amenazables` pero NO es objetivo válido de selección
@@ -205,8 +216,8 @@ plantilla para que Madera/Minerales lo copien al instanciar.
 |---|---|---|
 | No hay ninguna entidad amenazable elegible al momento del disparo (p. ej. antes de plantar nada) | El intento se descarta sin consumir el cooldown global (Core Rule 10); el temporizador de intervalo se pausa y se reanuda donde quedó al volver a haber una entidad elegible — nunca se resortea ni se pierde progreso | Coincide con `farm-economy-system.md` §4.3 ("se pausa por completo"); corregido en `/design-review` ronda 1 — antes decía "se reinicia con el mismo intervalo", inconsistente con esa fuente |
 | La única entidad elegible ya está en Reparando o Dañada | No es elegible — el pool de selección excluye cualquier entidad fuera de estado "activo normal" | Si eso vacía el pool, aplica el caso anterior |
-| Los dos jugadores tocan "Prevenir" en la misma entidad en la misma ventana (carrera de red) | El host procesa el primer RPC válido y descarta el segundo en silencio, sin cobro doble ni error visible. ⚠ Sesgo declarado (ronda 1): "primer RPC gana" no es neutral — el jugador con peor RTT hacia el host pierde sistemáticamente esta carrera; se acepta como trade-off conocido, sin mitigación diseñada, revisar en playtesting | Pilar 3 (fricción cero) — un error visible castigaría al jugador más lento sin motivo |
-| Un jugador (el host) se desconecta mientras hay una amenaza activa (nuevo, ronda 1) | Default provisional: la amenaza se resuelve como Prevenida automáticamente (sin daño), nunca como Dañada por abandono | Espeja el principio anti-softlock del Pilar 5 — un problema de conectividad no debe traducirse en castigo. Sigue ⚠ Provisional/sujeto a lo que decida el spike de red, pero ya no queda como comportamiento indefinido |
+| Los dos jugadores tocan "Prevenir" en la misma entidad en la misma ventana (carrera de red) | El host procesa el primer RPC válido y descarta el segundo en silencio, sin cobro doble ni error visible — **el silencio del RPC descartado es diseño deliberado (ronda 2), no un vacío de la interfaz sin especificar**. ⚠ Sesgo declarado (ronda 1): "primer RPC gana" no es neutral — el jugador con peor RTT hacia el host pierde sistemáticamente esta carrera; se acepta como trade-off conocido, sin mitigación diseñada, revisar en playtesting | Pilar 3 (fricción cero) — un error visible castigaría al jugador más lento sin motivo |
+| Un jugador (el host) se desconecta mientras hay una amenaza activa (nuevo, ronda 1; precisado en ronda 2) | Default provisional: la amenaza se resuelve como Prevenida automáticamente, **sin daño y sin cobro al pozo compartido** — no hereda el costo de una Prevención normal, ya que el jugador no eligió activamente prevenir | Espeja el principio anti-softlock del Pilar 5 — un problema de conectividad no debe traducirse en castigo NI en gasto no elegido. Escalado a bloqueante en ronda 2: el backgrounding móvil ocurre en la misma escala de segundos que la ventana de 4-6s, es el camino esperado, no el raro. Sigue ⚠ Provisional/sujeto a lo que decida el spike de red |
 | La entidad objetivo es cosechada/removida por el jugador durante la pre-alerta o la ventana activa | La amenaza se cancela para esa entidad, sin penalización ni reembolso; el disparo se da por resuelto | No debe existir una "amenaza huérfana" apuntando a algo que ya no existe |
 | Se coloca o destruye una estructura protectora durante la ventana de reacción activa | La severidad (Severo/Reducido) se evalúa en el momento de la RESOLUCIÓN, no del disparo | Premia la construcción reactiva bajo presión, no solo la preparación anticipada |
 | Un jugador se desconecta mientras hay una amenaza activa | ⚠ Provisional, heredado — sin resolver hasta que el spike de red defina migración de host | No se decide aquí a propósito; marcado como pendiente explícito, no implícito |
@@ -223,6 +234,11 @@ plantilla para que Madera/Minerales lo copien al instanciar.
 | Madera | Madera depende de Amenazas | Instanciará el framework para derrumbes — dura, sistema aún no diseñado |
 | Minerales | Minerales depende de Amenazas | Instanciará el framework para incendios — dura, sistema aún no diseñado |
 | UI/HUD | UI/HUD depende de Amenazas | Consume estado activo/dañado para el telegraph — blanda |
+
+**Requisito de testabilidad (nuevo, `/design-review` ronda 2 — hallazgo de `qa-lead`)**: el generador
+de números aleatorios usado para la selección de entidad (Core Rule 1) debe ser inyectable (no un
+singleton global) — permite a los tests fijar una semilla determinista, requisito de AC-1 y coherente
+con la regla del proyecto de "sin semillas aleatorias en tests, resultados deterministas".
 
 ## Tuning Knobs
 
@@ -295,7 +311,8 @@ GDD completo esté aprobado.
 | Ícono "anillo roto" (Severo) / "muesca protegida" (Reducido) | Overlay diegético sobre la entidad, no HUD de esquina | Aparece al pasar a Dañado, desaparece al completar Reparando | Solo sobre la entidad afectada específica |
 | Botón de acción contextual (Prevenir/Reparar) | Anclado al mundo/pulgar, no HUD fijo (art bible §7.1) | Cambia de verbo según el estado de la entidad bajo el jugador | Solo cuando el jugador está sobre/cerca de una entidad en Amenaza activa o Dañada |
 | Placeholder "presencia del compañero" | Glyph pequeño persistente, ya reservado en art bible §7.9 | — | Reservado para cuando el spike de UX táctil decida el mecanismo — Amenazas hereda el hueco, no lo diseña |
-| Indicador de borde / nudge de cámara hacia la entidad amenazada (nuevo, `/design-review` ronda 1) | Borde de pantalla, apunta hacia la entidad | Aparece si la entidad amenazada está fuera del viewport del jugador | Solo mientras hay amenaza activa y la entidad no es visible — sin esto, "texto cerca de la entidad" degenera a cero señal (hallazgo de `ux-designer`) |
+| Indicador de borde / nudge de cámara hacia la entidad amenazada (nuevo, `/design-review` ronda 1) | Borde de pantalla, apunta hacia la entidad | Aparece si la entidad amenazada está fuera del viewport del jugador | Solo mientras hay amenaza activa y la entidad no es visible — sin esto, "texto cerca de la entidad" degenera a cero señal (hallazgo de `ux-designer`). Depende del mismo spike de UX táctil que Core Rule 11 |
+| Botón de acción contextual — área táctil mínima (nuevo, `/design-review` ronda 2) | Overlay invisible sobre el botón visual | Constante, no cambia con el estado | 44×44pt / 48×48dp mínimo (convención iOS HIG / Material Design), independiente del tamaño visual del ícono — el loop entero depende de un toque preciso en 4-6s; sin este piso declarado, el spike de UX táctil no tiene de dónde partir. Sujeto a confirmación en el futuro `/ux-design` |
 
 📌 **UX Flag — Amenazas**: este sistema tiene requisitos de UI reales. En Fase 4 (Pre-Producción),
 correr `/ux-design` para el HUD/telegraph de amenaza antes de escribir épicas. Las historias que
@@ -306,11 +323,12 @@ referencien esta UI deben citar `design/ux/[pantalla].md`, no este GDD directame
 > `qa-lead` consultado — modo Lean (Acceptance Criteria es la otra sección que sí recibe especialista
 > en este modo).
 
-- **AC-1** (Selección agrupada, con cláusula de muestra — corregido ronda 1): DADO que hay entidades
-  activas de varios tipos de recurso, CUANDO se ejecutan N≥30 disparos independientes, ENTONCES la
-  distribución de entidades seleccionadas muestra representación de cada tipo de recurso presente
-  (no sistemáticamente sesgada hacia uno solo) — criterio probabilístico, no verificable en un solo
-  disparo.
+- **AC-1** (Selección agrupada, con umbral estadístico concreto — corregido rondas 1 y 2): DADO que
+  hay entidades activas de varios tipos de recurso, CUANDO se ejecutan N≥30 disparos independientes,
+  ENTONCES la distribución de tipos de recurso seleccionados no rechaza la hipótesis de uniformidad
+  ponderada por tamaño de sub-pool (test Chi-cuadrado contra distribución uniforme esperada, p>0.05)
+  — reemplaza en ronda 2 el lenguaje "no sistemáticamente sesgada hacia uno solo", hand-waving
+  prohibido por las reglas de documentación del proyecto. Requiere RNG inyectable (ver Dependencies).
 - **AC-2** (Cooldown global): DADO que una amenaza se acaba de disparar, CUANDO no han pasado 15s,
   ENTONCES ningún nuevo disparo (de cualquier tipo) ocurre, aunque otra entidad se vuelva elegible de
   forma independiente.
@@ -319,17 +337,21 @@ referencien esta UI deben citar `design/ux/[pantalla].md`, no este GDD directame
 - **AC-4** (Ventana de reacción): DADO que termina la pre-alerta, CUANDO la ventana específica de la
   instancia está activa (p. ej. 4-6s en cultivos), ENTONCES "Prevenir" solo es tocable dentro de ese
   lapso; tocar después de expirar no tiene efecto.
-- **AC-5** (Señal doble, con método de observación — corregido ronda 1): DADO cualquier amenaza
-  activa, CUANDO se capturan 3 momentos aleatorios del estado del juego durante la pre-alerta o la
-  ventana (método: captura de estado + verificación de que ambos canales —sprite de mundo y texto
-  HUD— son simultáneamente no-nulos), ENTONCES ambos están presentes en las 3 capturas — nunca solo
-  uno.
-- **AC-6** (Severidad en resolución, con frontera de tiempo y señal observable — corregido ronda 1):
-  DADO que no hay protección al momento del disparo, CUANDO se coloca protección en el segundo T
-  (0<T<duración_ventana), ENTONCES (a) el telegraph cambia observablemente de tono/intensidad dentro
-  de los 200ms siguientes a T (Core Rule 6 enmendada), y (b) si no se previene después de T, el daño
-  resuelve como Reducido, no Severo. El cambio debe ser detectable ANTES de que expire la ventana, no
-  solo confirmable en el estado final.
+- **AC-5** (Señal doble, con cobertura por evento — corregido rondas 1 y 2): DADO cualquier amenaza
+  activa, CUANDO se suscribe a la señal `visibility_changed` (o equivalente) de ambos canales —sprite
+  de mundo y texto HUD— durante toda la duración de la pre-alerta + ventana, ENTONCES ningún
+  intervalo entre eventos deja ambos canales simultáneamente ausentes. *(Ronda 2: reemplaza el
+  muestreo de 3 momentos aleatorios — mismo costo, cierra el hueco entre muestras que el muestreo
+  discreto no podía garantizar.)*
+- **AC-6** (Severidad en resolución, con frontera de tiempo, señal observable y alcance local —
+  corregido rondas 1 y 2): DADO que no hay protección al momento del disparo, CUANDO se coloca
+  protección en el segundo T (0<T<duración_ventana), ENTONCES (a) el telegraph cambia observablemente
+  de tono/intensidad dentro de los 200ms siguientes a T (Core Rule 6 enmendada), y (b) si no se
+  previene después de T, el daño resuelve como Reducido, no Severo. (a) y (b) se **verifican
+  localmente sobre el estado de protección en el host** — la sincronización cross-device de este
+  cambio queda diferida al spike de red, mismo tratamiento que AC-9; no se afirma sincronía entre
+  dispositivos hoy. El cambio debe ser detectable ANTES de que expire la ventana, no solo confirmable
+  en el estado final.
 - **AC-7** (Prevenir): DADO una ventana activa, CUANDO el jugador toca Prevenir, ENTONCES se descuenta
   dinero, el estado de daño nunca se aplica, y el efecto es instantáneo.
 - **AC-8** (Reparar): DADO que la entidad está Dañada, CUANDO se usa Reparar, ENTONCES el costo es
@@ -365,6 +387,10 @@ referencien esta UI deben citar `design/ux/[pantalla].md`, no este GDD directame
 - **AC-16** (Carrera de red en doble toque): **EXCLUIDO explícitamente** del alcance de QA de este
   GDD, mismo tratamiento que AC-9 — no es un TBD silencioso, es scope documentado pendiente del spike
   de red.
+- **AC-17** (Coordinación cross-device, nuevo en ronda 2 — paridad con AC-9/AC-16): **EXCLUIDO
+  explícitamente** del alcance de QA de este GDD — el canal "yo la tengo" y el fallback fuera de
+  pantalla (Core Rule 11) dependen enteramente del spike de UX táctil. Mismo tratamiento que AC-9/
+  AC-16: scope documentado, no TBD silencioso.
 
 ## Open Questions
 
@@ -372,8 +398,11 @@ referencien esta UI deben citar `design/ux/[pantalla].md`, no este GDD directame
 |---|---|---|---|
 | ¿El rango recomendado de ventana de reacción (3-8s) se sostiene una vez que derrumbe/incendio fijen sus propios números? | Diseñador de Madera/Minerales | Al autorar esos GDDs | Pendiente |
 | Mecanismo de autoridad de red para disparo/resolución | Spike de red | Antes de `/create-architecture` | Pendiente, ⚠ Provisional en todo el documento |
-| Riesgo de que N llegue a 15-20+ y el intervalo supere 90-100s | Diseñador de Madera/Minerales | Al fijar los topes de entidades de esos recursos | Pendiente, marcado en Formulas |
 | Addendum al art bible con las 3 familias de forma + simplificación del cooldown único | `art-director` | Antes de que Madera/Minerales redacten su Visual/Audio | Pendiente |
+| Criterio de salience/legibilidad del preview de severidad + pregunta de playtest: ¿ver "ya está en Reducido" se lee como permiso para no correr? | `ux-designer`/`game-designer` | En playtest de Amenazas | Añadido en ronda 2 — "pequeño/atenuado" no garantiza percepción bajo presión, sin verificar todavía |
+| ¿Es t* (punto de equilibrio de `coste_no_prevenir`) alcanzable dado el ritmo real de disparo, o las amenazas llegan casi siempre con t_progreso≈1 (Prevenir domina de facto)? | Diseñador de Madera/Minerales | Al instanciar cada recurso | Añadido en ronda 2 ([systems-designer]) — el invariante de instanciación es necesario pero no suficiente por sí solo |
+| Formalizar el sesgo de downtime (severo > reducido) como invariante/AC, no solo advertencia textual en Tuning Knobs | Sin dueño asignado | Sin fecha | Añadido en ronda 2 — rigor inconsistente con el resto de la sección, no bloqueante |
+| ADR stub o task ID externo para AC-9/AC-16/AC-17 (más allá de esta tabla de Open Questions) | `technical-director` (implícito) | Al correr `/create-architecture` | Añadido en ronda 2 ([qa-lead]) — el seguimiento actual solo apunta a esta misma tabla, no a un artefacto externo referenciable |
 | ¿Puede un jugador evitar sistemáticamente responder a amenazas mientras el otro siempre responde? | Sin dueño asignado | Sin fecha — hereda la Open Question de free-riding ya documentada en `game-concept.md`; Amenazas no la resuelve ni la agrava, tampoco la mitiga. Reconfirmado en `/design-review` ronda 1: se queda como nota, no se escala a bloqueante (desacuerdo `game-designer` vs. `creative-director`, resuelto a favor de no escalar) | Pendiente |
 | Cooldown global único (Core Rule 2) declarado como trade-off revisable | Sin dueño asignado | Al diseñar el canal de presencia de compañero (spike de UX táctil) | Añadido en ronda 1: `game-designer` sostiene que aplana las 3 identidades de amenaza en un solo interrupt; `creative-director` sostiene que es correcto sin canal de presencia. Se mantuvo la regla, se corrigió el Player Fantasy — revisar esta decisión si el canal de presencia cambia el cálculo |
 | Autoridad de red requerirá probablemente su propio ADR tras el spike | `technical-director` (implícito) | Tras el spike de red | Señal de alcance de `/design-review` ronda 1: la superficie de decisiones de red de este GDD (interfaz RPC, sesgo de latencia, default de pérdida de host) es lo bastante grande para un ADR dedicado, no solo notas inline |

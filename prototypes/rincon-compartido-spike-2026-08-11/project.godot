@@ -1,0 +1,19 @@
+; Engine configuration file.
+; PROTOTYPE - NOT FOR PRODUCTION. Hand-written for a throwaway spike test.
+
+config_version=5
+
+[application]
+
+config/name="Rincon Compartido - Amenazas Spike"
+run/main_scene="res://Main.tscn"
+config/features=PackedStringArray("4.7")
+
+[autoload]
+
+Economia="*res://scripts/economia.gd"
+Amenazas="*res://scripts/amenazas.gd"
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"

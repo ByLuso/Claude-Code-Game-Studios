@@ -1,72 +1,60 @@
 # Session State
 
 ## Current Task
-Ronda 5 de `/design-review design/gdd/amenazas.md` completa — veredicto **MAJOR REVISION NEEDED**
-(escaló desde NEEDS REVISION). El `creative-director` de esa ronda recomendó explícitamente dejar de
-parchear y reescribir 5 áreas desde invariantes; el usuario, informado de esa recomendación, decidió
-seguir parcheando por lotes. Apliqué los 10 bloqueantes + 2 desacuerdos en 6 lotes, verificando
-matemática/lógica yo mismo antes de escribir cada arreglo (no solo aceptando el texto del informe).
-Pendiente: comitear y pushear.
+Construido un spike de media-producción en Godot (`prototypes/rincon-compartido-spike-2026-08-11/`)
+que muestra el loop actualizado (cultivo + economía compartida + Amenazas) reflejando las 5 rondas de
+`/design-review` sobre `design/gdd/amenazas.md`. Pendiente: comitear/pushear, y que el usuario lo
+corra en Godot 4.7.1 y reporte errores/observaciones (Phase 6 del skill `/prototype`, modo spike).
 
-## Qué se corrigió en la ronda 5 (resumen para retomar si la sesión se corta)
+## Qué se construyó
 
-Ver `design/gdd/reviews/amenazas-review-log.md` (entrada de ronda 5) para el detalle completo. Los 6
-lotes, cada uno verificado independientemente antes de aplicarse:
+Reusé el patrón ya probado del concept prototype anterior (`rincon-compartido-concept/`, veredicto
+PROCEED) — mismas APIs de Godot (CharacterBody2D, Area2D, `_draw()` con `draw_rect`/`draw_circle`/
+`draw_string`+`ThemeDB.fallback_font`, autoloads, señales) para minimizar riesgo de errores nuevos.
 
-1. **Modelo de temporización**: `cooldown_global` (15s) era matemáticamente redundante en CUALQUIER
-   punto de referencia — verificado con números propios, no solo aceptado del informe. Eliminado por
-   completo; la exclusión mutua ahora se apoya solo en secuenciación (Core Rule 2 simplificada).
-   Barrido en ~15 lugares del documento + registro de entidades.
-2. **Invariante de instanciación**: el piso de `coste_no_prevenir` estaba anclado a la cantidad
-   equivocada (verificado con contraejemplo propio) — reanclado a `costo_prevenir`. Segundo requisito
-   de t* fortalecido de "existencia" a "≥25% del rango a cada lado".
-3. **Máquina de estados Prevenir/Reparar**: Core Rule 7b contradecía la tabla de States and
-   Transitions — resuelto moviendo el "crédito" a contabilidad RPC, no transición de estado. AC-19
-   ahora prueba el invariante de temporización real. `resultado=prevenido_automatico` distingue el
-   default de desconexión de una acción real.
-4. **Modelo de interacción táctil**: el usuario eligió botón único que apunta a la entidad más
-   cercana (resuelve la violación de autonomía de la prioridad fija de ronda 4). Core Rule 11 recibió
-   nueva justificación.
-5. **Visual**: conflicto de color real entre `farm-economy-system.md` (verde/naranja) y el art bible
-   (dorado) para Prevenida — corregido en la fuente. Mandato de VFX corregido (rig único es mejora
-   deliberada, no "el mismo patrón"). Severidad de Dañada/Reparando sin acotar reabierta con propuesta
-   técnica concreta (`MultiMeshInstance2D`).
-6. **Testabilidad**: AC-1/AC-6(a) no implementables contra la API real de Godot — añadidos requisitos
-   explícitos de interfaz de RNG abstracta, pool inyectable, y contrato de señal
-   (`severidad_pendiente_cambiada`).
+**Alcance** (acordado con el usuario antes de construir): 2 parcelas de Trigo, pozo de dinero
+compartido (un solo jugador local, sin red real), y el mecanismo de Amenazas completo tal como quedó
+tras la ronda 5 — pre-alerta 0.5s azul-blanco, ventana de 6s con enjambre de gota/diamante (no
+triángulos) y barra de tiempo, botón único de acción contextual que apunta a la parcela elegible MÁS
+CERCANA (no una prioridad fija — decisión de ronda 5), Prevenir/Reparar, y exclusión mutua de amenazas
+por secuenciación (sin `cooldown_global`, coincide con el Core Rule 2 simplificado de ronda 5).
+Explícitamente fuera: Severo/Reducido (no hay Refugio), Máquinas/Infraestructura/Silo, más de un
+cultivo, red/multijugador real.
+
+**Bug real encontrado y corregido en revisión propia antes de entregar**: el estado LISTA tenía un
+borde pulsante animado en `_draw()`, pero `_process()` no llamaba `queue_redraw()` en ese estado — el
+pulso nunca se habría visto. Corregido moviendo `queue_redraw()` a una llamada incondicional al final
+de `_process()`.
+
+Tecla de debug añadida (**T**) para forzar un disparo de amenaza inmediato, ya que el intervalo real
+(25-90s según la fórmula `amenaza_interval`) sería demasiado lento para un playtest corto.
 
 ## Progress Checklist
-- [x] Rondas 1-4 aplicadas (sesiones anteriores)
-- [x] Ronda 5 (8 especialistas + creative-director, revisión pura sin autocorrección) — MAJOR
-      REVISION NEEDED
-- [x] Decisión del usuario: seguir parcheando en vez de reescribir desde invariantes (informado del
-      riesgo explícitamente)
-- [x] 10 bloqueantes + 2 desacuerdos de ronda 5 aplicados, cada uno verificado independientemente
-- [x] Log de revisión actualizado con la entrada de ronda 5
+- [x] Alcance del spike acordado con el usuario (modo, camino Engine/Godot, 3 bullets de alcance)
+- [x] Proyecto Godot completo escrito: `project.godot`, `Main.tscn`, 5 scripts
+- [x] Revisión propia del código encontró y corrigió 1 bug real (redraw de LISTA)
+- [x] README.md con hipótesis, controles, cómo jugar, qué observar
+- [x] `prototypes/index.md` actualizado con la fila de este spike (estado "En progreso")
 - [ ] **Siguiente paso inmediato**: comitear y pushear
-- [ ] Correr `/design-review` una sexta vez, en sesión nueva — el patrón de "cada ronda encuentra
-      defectos más profundos" lleva 3 rondas consecutivas (3, 4, 5), no asumir que ronda 6 aprobará
-- [ ] Si ronda 6 sigue encontrando el mismo patrón, reconsiderar seriamente la recomendación del
-      creative-director de ronda 5: reescribir desde invariantes en vez de seguir parcheando
+- [ ] El usuario corre el proyecto en Godot 4.7.1, reporta errores o confirma que corre
+- [ ] Si corre: el usuario juega y responde qué observó (Phase 6 del skill, modo spike — sin
+      cuestionario formal de PROCEED/PIVOT/KILL, solo "¿respondió la pregunta? SÍ/NO y por qué")
+- [ ] Escribir `SPIKE-NOTE.md` con el resultado una vez el usuario reporte
+- [ ] Actualizar `prototypes/index.md` con el veredicto final del spike
 
 ## Key Decisions Carried Forward
-- Ver "Qué se corrigió en la ronda 5" arriba para el detalle completo.
-- **Riesgo aceptado explícitamente por el usuario**: continuar parcheando contra la recomendación
-  expresa del creative-director de reescribir desde invariantes. Documentado en el Status header del
-  propio GDD para que no se pierda esta decisión.
-- Patrón a vigilar: 3 rondas consecutivas (3, 4, 5) han encontrado defectos en las correcciones de la
-  ronda inmediatamente anterior. Si la ronda 6 repite el patrón, la recomendación de reescritura deja
-  de ser una opción a considerar y pasa a ser la más razonable.
+- No pude ejecutar Godot en este entorno (no está instalado) — el código no está verificado en
+  ejecución real, solo por revisión manual cuidadosa. Fiabilidad esperada del camino Engine per el
+  skill `/prototype`: ~50-60% a la primera, 2-4 rondas de iteración son normales, no una falla.
+- Reusar las APIs ya probadas del concept prototype anterior fue deliberado para reducir superficie de
+  error nueva, dado que no puedo probar el código yo mismo.
 
 ## Files Modified This Session (sin comitear)
-- `design/gdd/amenazas.md` — todas las correcciones de la ronda 5
-- `design/gdd/farm-economy-system.md` — corrección del conflicto de color (verde/naranja → dorado)
-- `design/registry/entities.yaml` — `plague_cooldown_global` reforzado como deprecated con nota
-  completa de ronda 5
-- `design/gdd/reviews/amenazas-review-log.md` — entrada de ronda 5 añadida
+- `prototypes/rincon-compartido-spike-2026-08-11/` — proyecto Godot completo, nuevo
+- `prototypes/index.md` — fila nueva añadida
 - `production/session-state/active.md` — este archivo
 
 ## Current Phase
-Ronda 5 completamente aplicada, sin comitear todavía. Si la sesión se interrumpe: leer este archivo,
-confirmar con `git status` si ya se comiteó, y si no, comitear/pushear antes de nada más. El siguiente
-paso real (fuera de esta sesión) es correr `/design-review` una sexta vez en sesión nueva.
+Spike construido, sin comitear todavía. Si la sesión se interrumpe: leer este archivo, confirmar con
+`git status` si ya se comiteó, y si no, comitear/pushear antes de nada más. El siguiente paso real es
+que el usuario abra el proyecto en Godot y reporte qué pasó.

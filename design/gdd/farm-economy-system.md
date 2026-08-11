@@ -210,7 +210,8 @@ interactúa:
   `game-concept.md` con la estética Sensation: "feedback rápido e inmediato al cosechar —
   partículas, sonido, contador subiendo")**: partícula breve sobre la parcela (silueta del cultivo
   cosechado, ~0.3s), sonido corto de cosecha (varía sutilmente por cultivo, no debe confundirse con
-  el flash verde de prevenir plaga), y el número de unidades ganadas aparece brevemente sobre la
+  el flash dorado de prevenir plaga — actualizado en ronda 5 de la revisión de `amenazas.md`, ver
+  3.5), y el número de unidades ganadas aparece brevemente sobre la
   parcela antes de sumarse al contador del silo en HUD. Especificación completa de asset (curvas de
   partícula, mezcla de audio) fuera de alcance de este documento — ver `/asset-spec` y un pase de
   `sound-designer` antes de implementar.
@@ -263,12 +264,17 @@ interactúa:
   "triángulos oscuros cerrándose", contradecía el art bible §3 —aprobado en esta misma sesión, pero
   después de que este párrafo se escribiera— que rechazó explícitamente triángulos afilados por
   riesgo de iconografía de combate, y "cerrándose" tenía el mismo problema de lectura depredadora que
-  "órbita" en `amenazas.md`) + texto naranja en HUD que especifica lado/parcela afectada.
+  "órbita" en `amenazas.md`) + texto azul-blanco en HUD que especifica lado/parcela afectada
+  (**corregido en `/design-review` de `amenazas.md` ronda 5, hallazgo de `art-director`**: decía
+  "texto naranja", color ausente de la paleta de 7 roles del art bible §4 — azul-blanco es el color
+  ya establecido para "atención, no peligro", que es exactamente lo que este texto comunica).
 - Ventana de reacción: 6s desde que el enjambre es visible (tras los 0.5s de pre-alerta) para
   Trigo y Maíz. **Para Fresa, la ventana se reduce a 4s** (decisión de balance, ver 3.2 y Edge
   Cases 5.6) — es parte deliberada de su perfil alto riesgo/alta recompensa, no un descuido.
-- Prevenir a tiempo: –$15 compartido, flash verde 0.3s, la parcela vuelve a su estado previo sin
-  pérdidas.
+- Prevenir a tiempo: –$15 compartido, flash dorado 0.3s (**corregido en ronda 5 de la revisión de
+  `amenazas.md`** — decía "flash verde", color ausente de la paleta; el art bible §4 manda
+  específicamente "dorado cálido" para "flash-bloom de Prevenida"), la parcela vuelve a su estado
+  previo sin pérdidas.
 - No prevenir: pasa a Marchita (o Dañada si hay Refugio y el jugador está dentro), se pierde
   cualquier cosecha que hubiera, sacudida de cámara 0.2s + partícula de polvo/hojas rotas + sonido
   grave. Este es el camino de fallo — ver Acceptance Criteria 8.3b para su criterio de prueba

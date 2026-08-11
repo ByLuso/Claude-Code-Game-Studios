@@ -142,3 +142,61 @@ que sí partía limpiamente de esta rama de trabajo — su contenido se adoptó 
 usuario revisara y aprobara las 4 decisiones de diseño que esas rondas reabrieron o introdujeron
 (marco de Player Fantasy, Core Rule 7b, escalada de free-riding, y el punto de medición del cooldown
 de Core Rule 2).
+
+## Review — 2026-08-11 — Verdict: MAJOR REVISION NEEDED (ronda 5)
+Scope signal: XL, sin cambios respecto a rondas 3-4
+Specialists: 8 especialistas (game-designer, systems-designer, qa-lead, art-director, ux-designer, network-programmer, economy-designer, godot-specialist) + creative-director (síntesis) — sesión nueva, revisión pura sin autocorrección
+Blocking items: 10 | Recommended: 12 | Desacuerdos: 2 (ambos adjudicados por el usuario a favor de la lectura del creative-director)
+Summary: Quinta ronda — verdict escaló de NEEDS REVISION a **MAJOR REVISION NEEDED**. Cada especialista
+fue instruido explícitamente para re-derivar reclamos en vez de confiar en las etiquetas "corregido"
+de rondas previas, más una semilla de sospechas propias del reviewer para verificar o refutar. Hallazgo
+central del `creative-director`: 6 de las 12 correcciones de ronda 4 no sobrevivieron re-derivación
+independiente, incluyendo sus dos arreglos principales (Core Rule 2/AC-2, y el piso de
+`coste_no_prevenir`) — mismo patrón de rondas 3 y 4, reapareciendo más profundo cada vez. Recomendó
+explícitamente DEJAR de parchear y reescribir 5 áreas desde invariantes. **El usuario decidió seguir
+parcheando por lotes de todos modos**, con verificación matemática/lógica independiente de cada
+hallazgo antes de aplicar el arreglo (no solo aceptar el texto propuesto por el informe).
+
+Los 10 bloqueantes, verificados y corregidos en 6 lotes:
+1. **Core Rule 2/AC-2 (modelo de temporización)**: confirmado matemáticamente que `cooldown_global`
+   (15s) era redundante en CUALQUIER punto de referencia (25s siempre excede 15s) — se eliminó la
+   constante por completo; la exclusión mutua ahora se apoya solo en secuenciación. Barrido en todo
+   el documento (Core Rule 10, AC-2/10/12/20, Edge Cases, Tuning Knobs, UI, Visual/Audio, Open
+   Questions, registro de entidades).
+2. **Invariante de instanciación**: confirmado con contraejemplo propio que el piso de ronda 4 estaba
+   anclado a la cantidad equivocada (mínimo entre 3 campos de costo, no el incremento propio de
+   `costo_prevenir`) — reanclado correctamente. Segundo requisito de t* fortalecido de "existencia" a
+   "≥25% del rango a cada lado".
+3. **Máquina de estados Prevenir/Reparar**: Core Rule 7b's "crédito retroactivo" contradecía la tabla
+   de States and Transitions (Prevenir no es válido en Normal) — resuelto moviendo el crédito a
+   contabilidad de respuesta RPC, no transición de estado. AC-19 ahora prueba el invariante de
+   temporización real, no solo el resultado. `resultado=prevenido_automatico` distingue el default de
+   desconexión de una acción real (evita misatribución en el futuro Panel de contribución).
+4. **Modelo de interacción táctil**: dos modelos incompatibles (botón único vs. hitboxes por entidad)
+   escritos en la misma ronda 4 — el usuario eligió botón único, apunta a la entidad más cercana
+   (resuelve también la violación de autonomía de la prioridad fija anterior). AC-22, UI Requirements,
+   y la nota anti-solape reescritas para coincidir. Core Rule 11 recibió nueva justificación (no
+   dependía de la promesa de Player Fantasy como pensaba `ux-designer`).
+5. **Visual**: conflicto de color real entre `farm-economy-system.md` (verde/naranja) y el art bible
+   (dorado) para Prevenida — corregido en la fuente. Mandato de VFX corregido (rig único global es
+   una mejora deliberada sobre el patrón per-entidad de `farm-economy-system.md` §3.1, no "el mismo
+   patrón" como afirmaba ronda 4) con preguntas de transform declaradas. Severidad del caso sin acotar
+   de Dañada/Reparando reabierta (desacuerdo adjudicado a favor de reabrir) con propuesta técnica
+   concreta (`MultiMeshInstance2D` batching).
+6. **Testabilidad**: AC-1 y AC-6(a) no eran implementables contra la API real de Godot — se añadieron
+   como requisitos explícitos una interfaz de RNG abstracta (sustituible por fake en tests), un pool
+   de entidades inyectable como fixture, y un contrato de señal concreto
+   (`severidad_pendiente_cambiada`) que antes se referenciaba sin definir.
+
+Prior verdict resolved: Parcialmente — los 4 hallazgos de ronda 4 sí se corrigieron en su momento
+(confirmado por esta ronda para el conflicto de forma del enjambre), pero 6 de esas correcciones no
+sobrevivieron re-derivación independiente, y 3 más resultaron contradichas por otras adiciones de la
+misma ronda 4.
+
+**Nota de independencia**: esta ronda 5 fue una revisión pura, sin autocorrección — el patrón de
+rondas 3-4 no se repitió. Los arreglos de esta ronda SÍ se aplicaron en la sesión autora original
+(distinta de la sesión reviewer), preservando la separación revisor/autor para esta ronda.
+
+Una **ronda 6** en sesión nueva sigue siendo necesaria para confirmar. Dado el patrón recurrente de
+"cada ronda encuentra defectos más profundos en la anterior", no se puede asumir que esta ronda cierre
+el documento — debe verificarse, no asumirse.

@@ -1,78 +1,72 @@
 # Session State
 
 ## Current Task
-Reconciliación de ramas: el usuario lanzó las rondas 3 y 4 de `/design-review design/gdd/amenazas.md`
-en sesiones nuevas que, en vez de trabajar sobre nuestra rama de trabajo
-(`claude/install-claude-code-global-sfpz62`), crearon sus propias ramas en GitHub. Encontré 2 ramas,
-las revisé, y reconcilié con el usuario. Pendiente: comitear y pushear.
+Ronda 5 de `/design-review design/gdd/amenazas.md` completa — veredicto **MAJOR REVISION NEEDED**
+(escaló desde NEEDS REVISION). El `creative-director` de esa ronda recomendó explícitamente dejar de
+parchear y reescribir 5 áreas desde invariantes; el usuario, informado de esa recomendación, decidió
+seguir parcheando por lotes. Apliqué los 10 bloqueantes + 2 desacuerdos en 6 lotes, verificando
+matemática/lógica yo mismo antes de escribir cada arreglo (no solo aceptando el texto del informe).
+Pendiente: comitear y pushear.
 
-## Qué se encontró y cómo se resolvió
+## Qué se corrigió en la ronda 5 (resumen para retomar si la sesión se corta)
 
-**`claude/amenazas-design-review-oq0jef`** — duplicado, descartado. Nace de un commit anterior al
-nuestro (antes de mi ronda 1), encontró los mismos 7 bloqueantes de forma independiente y los corrigió
-en su propia rama, pero nunca pasó por las rondas 2-4. Superada por nuestro trabajo. No se trajo nada.
+Ver `design/gdd/reviews/amenazas-review-log.md` (entrada de ronda 5) para el detalle completo. Los 6
+lotes, cada uno verificado independientemente antes de aplicarse:
 
-**`claude/design-review-amenazas-r3-22v8ae`** — no duplicada, contenía las rondas 3 y 4 reales.
-Nace limpiamente de nuestro `f53fe04` (tras nuestras rondas 1-2). Contenía 4 decisiones de diseño
-reales que no habíamos discutido:
-1. **Player Fantasy reescrito** (3ª vez) — de "¡yo la tengo!" (reparto de tareas) a "reflejo
-   compartido y seguro mutuo" — más honesto con lo que Core Rule 2 + 7b producen.
-2. **Core Rule 7b nueva** — ventana de simultaneidad de 150ms del lado del host, fusiona el cobro si
-   ambos jugadores tocan casi a la vez, evita que la latencia decida quién "gana" siempre.
-3. **Free-riding reabierto** — mitigación de solo-visibilidad (Amenazas emite qué jugador respondió,
-   para el futuro Panel de contribución), sin tocar el pozo sin atribución del Pilar 1.
-4. **Core Rule 2 redefinida** — el cooldown ahora se mide desde la RESOLUCIÓN de la amenaza actual,
-   no desde el disparo (la versión anterior era una regla inerte: el piso de 25s del intervalo
-   siempre excedía los 15s de cooldown).
-
-Presenté las 4 al usuario con Options→Decisión — **las 4 se aprobaron** (todas las recomendadas).
-Dado que esa rama ya era una continuación completa de nuestras rondas 1-2 (no solo estas 4 piezas),
-adopté su `amenazas.md` completo en vez de re-transcribir a mano — más confiable para un archivo de
-839 líneas con muchas piezas interconectadas (AC-1 a AC-22, contrato RPC dividido en 2 mensajes,
-invariante de `coste_no_prevenir` con piso relativo, Core Rule 4 con dependencia de Cámara/Viewport,
-etc.). Verifiqué que un bug real que yo mismo había encontrado independientemente (2 filas de Edge
-Cases contradictorias sobre desconexión) también estaba resuelto ahí, de forma más completa que mi
-propio arreglo.
-
-También creé `design/gdd/reviews/amenazas-review-log.md` con la entrada de ronda 4 que faltaba (la
-rama la tenía hasta ronda 3 solamente), más una nota final documentando esta reconciliación de ramas.
+1. **Modelo de temporización**: `cooldown_global` (15s) era matemáticamente redundante en CUALQUIER
+   punto de referencia — verificado con números propios, no solo aceptado del informe. Eliminado por
+   completo; la exclusión mutua ahora se apoya solo en secuenciación (Core Rule 2 simplificada).
+   Barrido en ~15 lugares del documento + registro de entidades.
+2. **Invariante de instanciación**: el piso de `coste_no_prevenir` estaba anclado a la cantidad
+   equivocada (verificado con contraejemplo propio) — reanclado a `costo_prevenir`. Segundo requisito
+   de t* fortalecido de "existencia" a "≥25% del rango a cada lado".
+3. **Máquina de estados Prevenir/Reparar**: Core Rule 7b contradecía la tabla de States and
+   Transitions — resuelto moviendo el "crédito" a contabilidad RPC, no transición de estado. AC-19
+   ahora prueba el invariante de temporización real. `resultado=prevenido_automatico` distingue el
+   default de desconexión de una acción real.
+4. **Modelo de interacción táctil**: el usuario eligió botón único que apunta a la entidad más
+   cercana (resuelve la violación de autonomía de la prioridad fija de ronda 4). Core Rule 11 recibió
+   nueva justificación.
+5. **Visual**: conflicto de color real entre `farm-economy-system.md` (verde/naranja) y el art bible
+   (dorado) para Prevenida — corregido en la fuente. Mandato de VFX corregido (rig único es mejora
+   deliberada, no "el mismo patrón"). Severidad de Dañada/Reparando sin acotar reabierta con propuesta
+   técnica concreta (`MultiMeshInstance2D`).
+6. **Testabilidad**: AC-1/AC-6(a) no implementables contra la API real de Godot — añadidos requisitos
+   explícitos de interfaz de RNG abstracta, pool inyectable, y contrato de señal
+   (`severidad_pendiente_cambiada`).
 
 ## Progress Checklist
-- [x] Rondas 1-2 de `/design-review` aplicadas (sesiones anteriores de este trabajo)
-- [x] Rama duplicada (`oq0jef`) identificada y descartada, sin acción necesaria
-- [x] Rama con rondas 3-4 reales (`r3-22v8ae`) revisada, 4 decisiones divergentes presentadas y
-      aprobadas por el usuario
-- [x] `amenazas.md` actualizado con el contenido completo de rondas 3-4
-- [x] `design/gdd/reviews/amenazas-review-log.md` creado, con la entrada de ronda 4 añadida
+- [x] Rondas 1-4 aplicadas (sesiones anteriores)
+- [x] Ronda 5 (8 especialistas + creative-director, revisión pura sin autocorrección) — MAJOR
+      REVISION NEEDED
+- [x] Decisión del usuario: seguir parcheando en vez de reescribir desde invariantes (informado del
+      riesgo explícitamente)
+- [x] 10 bloqueantes + 2 desacuerdos de ronda 5 aplicados, cada uno verificado independientemente
+- [x] Log de revisión actualizado con la entrada de ronda 5
 - [ ] **Siguiente paso inmediato**: comitear y pushear
-- [ ] Correr `/design-review` una quinta vez (ronda 5), **en sesión nueva de verdad** — dos rondas
-      consecutivas (3 y 4) se autocorrigieron en la misma sesión que revisó, rompiendo la
-      independencia revisor/autor; el propio `creative-director` de ronda 4 lo marcó como no-norma
-- [ ] Si aprueba en ronda 5: actualizar `systems-index.md` (fila #5) a "Approved"
-- [ ] Addendum al art bible con las 3 familias de forma (todavía pendiente, sin tocar en ninguna
-      ronda de revisión)
-- [ ] Considerar limpiar (borrar) las 2 ramas de GitHub ahora que están reconciliadas/descartadas —
-      no se hizo todavía, pendiente de que el usuario lo pida explícitamente
+- [ ] Correr `/design-review` una sexta vez, en sesión nueva — el patrón de "cada ronda encuentra
+      defectos más profundos" lleva 3 rondas consecutivas (3, 4, 5), no asumir que ronda 6 aprobará
+- [ ] Si ronda 6 sigue encontrando el mismo patrón, reconsiderar seriamente la recomendación del
+      creative-director de ronda 5: reescribir desde invariantes en vez de seguir parcheando
 
 ## Key Decisions Carried Forward
-- **Lección de proceso nueva**: cuando se lanzan sesiones de revisión en ventanas nuevas de Claude
-  Code, verificar primero si terminaron en su propia rama de git en vez de la rama de trabajo — no
-  asumir que "sesión nueva" significa "mismos commits, misma rama."
-- Ver "Qué se encontró y cómo se resolvió" arriba para el detalle completo de las 4 decisiones de
-  diseño reconciliadas.
-- El patrón de "corregir en la misma sesión que revisa" ya ocurrió 2 veces (rondas 3 y 4), ambas por
-  petición/elección explícita del usuario en esas sesiones, no por decisión del skill. El
-  `creative-director` de ronda 4 recomienda no dejar que se vuelva la norma — la ronda 5 debe ser una
-  revisión pura, sin autocorrección en la misma sesión.
+- Ver "Qué se corrigió en la ronda 5" arriba para el detalle completo.
+- **Riesgo aceptado explícitamente por el usuario**: continuar parcheando contra la recomendación
+  expresa del creative-director de reescribir desde invariantes. Documentado en el Status header del
+  propio GDD para que no se pierda esta decisión.
+- Patrón a vigilar: 3 rondas consecutivas (3, 4, 5) han encontrado defectos en las correcciones de la
+  ronda inmediatamente anterior. Si la ronda 6 repite el patrón, la recomendación de reescritura deja
+  de ser una opción a considerar y pasa a ser la más razonable.
 
 ## Files Modified This Session (sin comitear)
-- `design/gdd/amenazas.md` — reemplazado con el contenido reconciliado de rondas 1-4
-- `design/gdd/reviews/amenazas-review-log.md` — nuevo, con entrada de ronda 4 añadida + nota de
-  reconciliación de ramas
+- `design/gdd/amenazas.md` — todas las correcciones de la ronda 5
+- `design/gdd/farm-economy-system.md` — corrección del conflicto de color (verde/naranja → dorado)
+- `design/registry/entities.yaml` — `plague_cooldown_global` reforzado como deprecated con nota
+  completa de ronda 5
+- `design/gdd/reviews/amenazas-review-log.md` — entrada de ronda 5 añadida
 - `production/session-state/active.md` — este archivo
 
 ## Current Phase
-Reconciliación de ramas completa, sin comitear todavía. Si la sesión se interrumpe: leer este
-archivo, confirmar con `git status` si ya se comiteó, y si no, comitear/pushear antes de nada más. El
-siguiente paso real (fuera de esta sesión) es correr `/design-review` una quinta vez, en una sesión
-genuinamente nueva que solo revise, sin autocorregir.
+Ronda 5 completamente aplicada, sin comitear todavía. Si la sesión se interrumpe: leer este archivo,
+confirmar con `git status` si ya se comiteó, y si no, comitear/pushear antes de nada más. El siguiente
+paso real (fuera de esta sesión) es correr `/design-review` una sexta vez en sesión nueva.

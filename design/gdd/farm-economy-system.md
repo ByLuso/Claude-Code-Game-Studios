@@ -112,7 +112,7 @@ keyframes en 0%/33%/66%/100% del tiempo de crecimiento. Confirmar contra las API
 vigentes (ver `docs/engine-reference/godot/VERSION.md`) antes de implementar, dado el riesgo de
 conocimiento marcado ALTO para esta versión. Para el enjambre de plaga (3.5) y las partículas de
 impacto, usar nodos pooled/reutilizados (`GPUParticles2D` reutilizado por parcela, o
-`MultiMeshInstance2D` para los triángulos del enjambre) en vez de un nodo de partículas nuevo por
+`MultiMeshInstance2D` para las formas de gota/diamante del enjambre) en vez de un nodo de partículas nuevo por
 evento — necesario para mantenerse dentro del presupuesto de <100 draw calls con hasta 6 parcelas
 potencialmente animando a la vez (ver `.claude/docs/technical-preferences.md`).
 
@@ -257,8 +257,13 @@ interactúa:
 - Intervalo entre plagas por parcela: aleatorio, escala con el número de parcelas activas (fórmula
   en 4.3).
 - **Cooldown global obligatorio de 15s** entre disparos de plaga en parcelas distintas.
-- Señal doble siempre: enjambre físico (triángulos oscuros cerrándose sobre la parcela en pasos
-  discretos de ~0.8s) + texto naranja en HUD que especifica lado/parcela afectada.
+- Señal doble siempre: enjambre físico (clúster de formas de gota/diamante suaves, mate oscuro
+  desaturado, en nube dispersa y arremolinada sobre la parcela, en pasos discretos de ~0.8s —
+  **corregido en `/design-review` de `amenazas.md` ronda 1 (2026-08-11)**: la descripción anterior,
+  "triángulos oscuros cerrándose", contradecía el art bible §3 —aprobado en esta misma sesión, pero
+  después de que este párrafo se escribiera— que rechazó explícitamente triángulos afilados por
+  riesgo de iconografía de combate, y "cerrándose" tenía el mismo problema de lectura depredadora que
+  "órbita" en `amenazas.md`) + texto naranja en HUD que especifica lado/parcela afectada.
 - Ventana de reacción: 6s desde que el enjambre es visible (tras los 0.5s de pre-alerta) para
   Trigo y Maíz. **Para Fresa, la ventana se reduce a 4s** (decisión de balance, ver 3.2 y Edge
   Cases 5.6) — es parte deliberada de su perfil alto riesgo/alta recompensa, no un descuido.
@@ -797,8 +802,8 @@ detalle y la recomendación.
   Apéndice C2 de esa misma ronda ya reconocía (como ítem no bloqueante) que el spike de
   `game-concept.md` está delimitado para cintas/trabajadores y el tamaño de la cuadrícula de
   automatización de largo plazo, **no** para el contenido específico de este documento (hasta 6
-  parcelas con estados animados independientes vía `AnimationPlayer`, enjambre de plaga vía
-  `MultiMeshInstance2D`, partículas pooled por parcela, 2 máquinas, y hasta 6 segmentos visibles de
+  parcelas con estados animados independientes vía `AnimationPlayer`, enjambre de plaga (formas de
+  gota/diamante) vía `MultiMeshInstance2D`, partículas pooled por parcela, 2 máquinas, y hasta 6 segmentos visibles de
   Silo + Almacén + Refugio + hasta 10 ítems de decoración simultáneos). **Resuelto (decisión de alcance
   de spike tomada el 2026-08-10, fuera del flujo de `/design-review` — ver Apéndice A #11)**: se
   descartó programar un segundo spike separado — el

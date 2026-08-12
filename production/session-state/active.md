@@ -1,10 +1,10 @@
 # Session State
 
 ## Current Task
-Spike de Godot (`prototypes/rincon-compartido-spike-2026-08-11/`) extendido en 4 pasadas seguidas a
+Spike de Godot (`prototypes/rincon-compartido-spike-2026-08-11/`) extendido en 5 pasadas seguidas a
 petición directa del usuario ("continua haciendo el juego" → "sigue agregando, máquinas y expansión
-de terreno"), sin pausar a esperar el playtest. Todo comiteado y pusheado. Pendiente: que el usuario
-lo corra y reporte, o que pida seguir extendiendo.
+de terreno" → "continua"), sin pausar a esperar el playtest. Todo comiteado y pusheado. Pendiente:
+que el usuario lo corra y reporte, o que pida seguir extendiendo.
 
 ## Qué existe ahora en el spike
 
@@ -26,6 +26,15 @@ lo corra y reporte, o que pida seguir extendiendo.
    no automatización 100% desatendida). `jugador.gd` ahora busca en el grupo compartido
    `interactuables` (antes solo `parcelas`) para que el Taller use la misma lógica de objetivo-más-
    cercano.
+5. **+Silo** (commit `6148ee7`): cosechar ya no da dinero directo — suma al Silo compartido
+   (`scripts/silo.gd`, capacidad base $150, farm-economy-system.md 3.7/4.4). Silo lleno bloquea
+   cosecha manual y de Cosechadora sin perder nada (Edge Case 5.8) y excluye la parcela de
+   elegibilidad de Amenaza mientras dure el bloqueo (evita doble castigo). Nueva estructura
+   `scripts/silo_estructura.gd` junto al Taller: un toque vende todo el contenido (divergencia
+   documentada de la canalización de venta real de 1-2s, misma razón que Sembradora). Taller vende
+   hasta 3 tiers de ampliación ($80/$200/$400, +$200 capacidad c/u) tras $500 en ventas acumuladas;
+   tier 4+ se cortó a propósito (el propio GDD lo recalifica como sink de prestigio sin impacto real
+   en decisiones, ronda 3).
 
 Controles: J1 = WASD+E, J2 = flechas+Enter, C = ciclar cultivo (compartido), T = forzar amenaza
 (debug, evita esperar el intervalo real de 25-90s). Sin teclas nuevas en esta pasada — compra de
@@ -36,10 +45,11 @@ terreno/máquinas usa la misma tecla de acción contextual.
 - [x] 2º jugador + Refugio añadidos y pusheados
 - [x] 3 cultivos añadidos y pusheados
 - [x] Máquinas (Sembradora/Cosechadora) + expansión de terreno (6 parcelas) añadidas y pusheadas
+- [x] Silo (capacidad, bloqueo de cosecha, venta con un toque, tiers de ampliación) añadido y pusheado
 - [ ] **El usuario todavía no lo ha corrido** — sigue sin verificación real de ejecución (no hay
       Godot instalado en este entorno; todo el código se revisó a mano, no se ejecutó)
-- [ ] Si el usuario pide seguir sin probar primero: candidatos siguientes son el Silo con capacidad
-      de venta, Decoración/Confort, o el spike de UX táctil para el gesto de mantener-para-plantar —
+- [ ] Si el usuario pide seguir sin probar primero: candidatos siguientes son Almacén de semillas,
+      Decoración/Confort, o el spike de UX táctil para los gestos de mantener (plantar y vender) —
       todos mencionados como explícitamente NO probados en el README actual
 - [ ] Escribir `SPIKE-NOTE.md` una vez el usuario reporte un resultado real
 - [ ] Actualizar `prototypes/index.md` con el veredicto final
@@ -54,13 +64,13 @@ terreno/máquinas usa la misma tecla de acción contextual.
   minimizar riesgo dado que no puedo ejecutar Godot aquí.
 
 ## Files Modified This Session
-- `prototypes/rincon-compartido-spike-2026-08-11/` — todo el proyecto, 4 pasadas de commits
+- `prototypes/rincon-compartido-spike-2026-08-11/` — todo el proyecto, 5 pasadas de commits
 - `prototypes/index.md`
 - `production/session-state/active.md` — este archivo
 
-Todo comiteado y pusheado hasta el commit `989ee14`.
+Todo comiteado y pusheado hasta el commit `6148ee7`.
 
 ## Current Phase
 Spike en buen punto de pausa natural (base + co-op + severidad + variedad de cultivos + máquinas +
-expansión de terreno, todo funcionalmente coherente sobre el papel). Esperando que el usuario lo
-corra, o que pida seguir extendiendo sin probar primero.
+expansión de terreno + Silo, todo funcionalmente coherente sobre el papel). Esperando que el usuario
+lo corra, o que pida seguir extendiendo sin probar primero.

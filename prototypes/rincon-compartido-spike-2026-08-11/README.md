@@ -19,11 +19,12 @@ algo jugable.
 
 **Explícitamente NO prueba**: red real (2 jugadores locales, mismo teclado,
 mismo dispositivo — la capa de red de `amenazas.md` sigue ⚠ Provisional, un
-prototipo local no puede validarla), Silo/capacidad de venta, Decoración/
-Confort, el gesto real de mantener-para-plantar (⚠ Provisional en el GDD,
-pendiente del spike de UX táctil — este spike usa un toque simple, ver nota
-de Sembradora abajo), la sensación táctil final en móvil (esto corre con
-teclado en escritorio).
+prototipo local no puede validarla), Almacén de semillas, Decoración/Confort,
+el gesto real de mantener-para-plantar ni la canalización de venta real de
+1-2s (ambos ⚠ Provisional en el GDD, pendientes del spike de UX táctil — este
+spike usa toques simples e instantáneos en su lugar, ver notas de Sembradora
+y Silo abajo), la sensación táctil final en móvil (esto corre con teclado en
+escritorio).
 
 **Actualizado 2026-08-11**: se añadió el segundo jugador local (Pilar 1
 necesita 2 personas para probarse de verdad), el Refugio (para poder ver la
@@ -48,6 +49,21 @@ que **cosechas manualmente** una parcela — nunca se dispara sola ni encadena
 otra auto-cosecha, respetando el Anti-Pilar "NO automatización 100%
 desatendida"; tampoco cosecha Fresa nunca (solo manual, por su tope de
 concurrencia).
+
+**Tercera actualización 2026-08-11**: cosechar ya no da dinero directo — suma
+al **Silo** compartido (§3.7/4.4), una estructura nueva junto al Taller con
+capacidad base $150 (de valor de venta sin vender, no unidades). Con el silo
+lleno, cosechar (manual o de Cosechadora) no funciona: no pierde nada, la
+parcela se queda Lista indefinidamente hasta que haya espacio, y mientras
+tanto queda excluida de elegibilidad de Amenaza (evita el doble castigo que
+el propio GDD identificó en su ronda 3). Un toque en el Silo **vende todo su
+contenido** de una vez — divergencia deliberada de la canalización de venta
+real (mantener 1-2s, cancelable), la misma razón que la Sembradora: este
+spike no modela gestos de mantener. El Taller vende hasta 3 tiers de
+ampliación de Silo ($80/$200/$400, +$200 de capacidad cada uno) una vez
+acumulados $500 en ventas — el tier 4+ real es un sink de prestigio sin
+impacto en decisiones (según el propio hallazgo de ronda 3 del GDD), así que
+se cortó del spike a propósito.
 
 ## Cómo correrlo
 
@@ -86,7 +102,10 @@ en este spike.
   ventana de amenaza más corta — 4s en vez de 6s — y **solo puede haber una
   Fresa en vuelo a la vez en toda la granja**, tal como especifica
   `farm-economy-system.md`). Cuando esté Lista (brote de color, pulso
-  dorado) — acércate y pulsa tu tecla para cosechar.
+  dorado) — acércate y pulsa tu tecla para cosechar. Cosechar **no da dinero
+  directo**: suma al Silo compartido (ver más abajo). Si el Silo está lleno,
+  el botón muestra "Cosechar (silo lleno)" y la parcela parpadea en rojo al
+  intentarlo — no se pierde nada, simplemente espera.
 - En algún momento (o pulsa **T** para forzarlo ahora) una parcela elegible
   recibe una **amenaza**: 0.5s de parpadeo azul-blanco (pre-alerta, sin poder
   actuar todavía) seguido de una ventana de 6s con un enjambre de formas de
@@ -125,7 +144,15 @@ en este spike.
   abajo/izq/der) que esté Lista se auto-cosecha sola tras un pequeño retraso
   (25% de su tiempo de crecimiento) — verás un contador "Cosechadora: X.Xs"
   sobre la parcela. La Fresa nunca se auto-cosecha (siempre manual), y la
-  auto-cosecha nunca dispara otra cadena por sí sola.
+  auto-cosecha nunca dispara otra cadena por sí sola. Si el Silo está lleno
+  cuando le toca a la Cosechadora, espera ahí mismo ("Cosechadora: esperando
+  silo") sin perder el retraso ya transcurrido.
+- La torre dorada junto al Taller es el **Silo** — muestra su contenido actual
+  sobre su capacidad (p. ej. `$60 / $150`) y un segmento apilado por cada tier
+  comprado. Acércate y pulsa tu tecla para **vender todo el contenido** de una
+  vez (todo el pozo compartido se beneficia). Tras acumular $500 en ventas
+  totales, el Taller ofrece ampliar su capacidad en hasta 3 tiers
+  ($80 → $200 → $400, cada uno suma +$200 de capacidad).
 
 ## Qué observar durante el playtest
 
@@ -157,6 +184,15 @@ en este spike.
 - ¿Comprar terreno y máquinas en el mismo pozo compartido que paga Prevenir/
   Reparar genera tensión de decisión real (invertir en crecer vs. guardar
   colchón para amenazas), o rara vez compiten en la práctica?
+- ¿El paso extra de "cosechar llena el Silo, luego hay que ir a venderlo"
+  se siente como un ritmo de gestión interesante, o como un viaje extra
+  tedioso que no aporta nada frente a cosechar-y-cobrar directo?
+- Con el Silo lleno: ¿la parcela bloqueada en Lista se nota a tiempo (antes
+  de perder una amenaza por no poder cosecharla), o el jugador se sorprende
+  cuando "Cosechar" ya no funciona?
+- ¿$150 de capacidad base del Silo se siente ajustado (obliga a vender
+  seguido) o generoso (rara vez se llena) dado el ritmo de cosecha de este
+  spike?
 
 ## Estado
 

@@ -8,6 +8,12 @@ extends Area2D
 # system.md 3.3, 4.2); efecto de Cosechadora (cadena de auto-cosecha en
 # vecinos Chebyshev-1, 3.6) y de Sembradora (auto-replante, ver maquinas.gd
 # para la nota de por que diverge del mecanismo real).
+#
+# Updated: cosechar ya no da dinero directo -- suma al Silo compartido (3.7,
+# 4.4). Silo lleno bloquea la cosecha manual y la automatica de Cosechadora
+# sin perder nada (Edge Case 5.8) y excluye la parcela de elegibilidad de
+# Amenaza mientras dure el bloqueo (evita el doble castigo, ver Apendice A
+# #8 en el GDD).
 
 signal estado_cambio
 signal severidad_pendiente_cambio(severidad: String)
@@ -33,6 +39,7 @@ var _timer: float = 0.0
 var _pulse_time: float = 0.0
 var _reaction_window: float = 6.0
 var _auto_harvest_pendiente: float = -1.0
+var _silo_lleno_feedback: float = 0.0
 
 func _ready() -> void:
 	estado = estado_inicial
@@ -40,8 +47,18 @@ func _ready() -> void:
 	add_to_group("interactuables")
 	queue_redraw()
 
+func _valor_cosecha() -> int:
+	var datos: Dictionary = Cultivos.DATA[tipo_cultivo]
+	return int(datos["units"]) * int(datos["price"])
+
 func esta_elegible_para_amenaza() -> bool:
-	return estado == Estado.CRECIENDO or estado == Estado.LISTA
+	if estado == Estado.CRECIENDO:
+		return true
+	if estado == Estado.LISTA:
+		# Edge Case 5.8: Lista-bloqueada-por-silo-lleno no es objetivo de
+		# Amenaza -- evita castigar dos veces algo ya bloqueado mecanicamente.
+		return Silo.puede_agregar(_valor_cosecha())
+	return false
 
 func iniciar_pre_alerta() -> void:
 	if not esta_elegible_para_amenaza():
@@ -62,8 +79,9 @@ func accion_disponible() -> String:
 			var datos: Dictionary = Cultivos.DATA[cultivo]
 			return "Plantar %s ($%d)" % [cultivo, datos["seed_cost"]]
 		Estado.LISTA:
-			var datos: Dictionary = Cultivos.DATA[tipo_cultivo]
-			return "Cosechar (+$%d)" % (int(datos["units"]) * int(datos["price"]))
+			if not Silo.puede_agregar(_valor_cosecha()):
+				return "Cosechar (silo lleno)"
+			return "Cosechar (+$%d)" % _valor_cosecha()
 		Estado.AMENAZA_ACTIVA:
 			return "Prevenir ($%d)" % PREVENT_COST
 		Estado.DANADA:
@@ -83,9 +101,13 @@ func ejecutar_accion() -> bool:
 		Estado.VACIA:
 			return _plantar(Cultivos.cultivo_seleccionado)
 		Estado.LISTA:
+			if not Silo.puede_agregar(_valor_cosecha()):
+				_silo_lleno_feedback = 0.4
+				queue_redraw()
+				return false
 			var datos: Dictionary = Cultivos.DATA[tipo_cultivo]
 			var unidades: int = datos["units"]
-			Economia.ganar(unidades * int(datos["price"]))
+			Silo.agregar(_valor_cosecha())
 			Cultivos.registrar_venta(unidades)
 			if tipo_cultivo == "Fresa":
 				Cultivos.fresa_en_vuelo = false
@@ -163,18 +185,28 @@ func _esta_protegida() -> bool:
 
 func _process(delta: float) -> void:
 	_pulse_time += delta
+	if _silo_lleno_feedback > 0.0:
+		_silo_lleno_feedback = maxf(_silo_lleno_feedback - delta, 0.0)
 
 	if _auto_harvest_pendiente >= 0.0:
 		_auto_harvest_pendiente -= delta
 		if _auto_harvest_pendiente <= 0.0:
-			_auto_harvest_pendiente = -1.0
+			_auto_harvest_pendiente = 0.0
 			if estado == Estado.LISTA:
-				var datos: Dictionary = Cultivos.DATA[tipo_cultivo]
-				var unidades: int = datos["units"]
-				Economia.ganar(unidades * int(datos["price"]))
-				Cultivos.registrar_venta(unidades)
-				_entrar_vacia()
+				# Silo lleno pospone la auto-cosecha (3.6): el retraso ya
+				# transcurrido no se pierde, se reintenta cada frame hasta
+				# que haya espacio (simplificacion de spike frente al
+				# re-chequeo event-driven que especifica el GDD real).
+				if Silo.puede_agregar(_valor_cosecha()):
+					var datos: Dictionary = Cultivos.DATA[tipo_cultivo]
+					var unidades: int = datos["units"]
+					Silo.agregar(_valor_cosecha())
+					Cultivos.registrar_venta(unidades)
+					_auto_harvest_pendiente = -1.0
+					_entrar_vacia()
 				# Auto-cosecha NO dispara otra cadena -- solo la cosecha manual dispara.
+			else:
+				_auto_harvest_pendiente = -1.0
 
 	match estado:
 		Estado.CRECIENDO:
@@ -237,9 +269,18 @@ func _draw() -> void:
 			_draw_planta(1.0, true, color_cultivo)
 			var pulso: float = 0.5 + 0.5 * sin(_pulse_time * 4.0)
 			draw_rect(base_rect, Color(1.0, 0.85, 0.2, pulso * 0.25), false, 3.0)
+			var silo_llena: bool = not Silo.puede_agregar(_valor_cosecha())
 			draw_string(ThemeDB.fallback_font, Vector2(-38, -50), "¡%s listo!" % tipo_cultivo)
-			if _auto_harvest_pendiente >= 0.0:
+			if silo_llena:
+				var parpadeo_silo: float = 0.5 + 0.5 * sin(_pulse_time * 6.0)
+				draw_rect(base_rect, Color(1.0, 0.2, 0.15, parpadeo_silo * 0.3), false, 3.0)
+				draw_string(ThemeDB.fallback_font, Vector2(-38, 55), "Silo lleno")
+			elif _auto_harvest_pendiente > 0.0:
 				draw_string(ThemeDB.fallback_font, Vector2(-38, 55), "Cosechadora: %.1fs" % _auto_harvest_pendiente)
+			elif _auto_harvest_pendiente == 0.0:
+				draw_string(ThemeDB.fallback_font, Vector2(-38, 55), "Cosechadora: esperando silo")
+			if _silo_lleno_feedback > 0.0:
+				draw_rect(base_rect, Color(1.0, 0.1, 0.1, _silo_lleno_feedback * 0.6), false, 4.0)
 		Estado.PRE_ALERTA:
 			draw_rect(base_rect, Color(0.36, 0.26, 0.16))
 			_draw_planta(1.0 if _progreso >= 1.0 else _progreso, _progreso >= 1.0, color_cultivo)

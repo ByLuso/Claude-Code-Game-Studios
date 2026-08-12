@@ -14,6 +14,7 @@ config/features=PackedStringArray("4.7")
 Economia="*res://scripts/economia.gd"
 Cultivos="*res://scripts/cultivos.gd"
 Maquinas="*res://scripts/maquinas.gd"
+Silo="*res://scripts/silo.gd"
 Amenazas="*res://scripts/amenazas.gd"
 
 [rendering]

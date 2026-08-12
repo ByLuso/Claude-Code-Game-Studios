@@ -11,7 +11,7 @@ extends CanvasLayer
 func _ready() -> void:
 	Economia.dinero_cambio.connect(_on_dinero_cambio)
 	_on_dinero_cambio(Economia.dinero)
-	ayuda_label.text = "J1: WASD mover, E accion.  J2: flechas mover, ENTER accion.  C = ciclar cultivo (compartido).  T = forzar amenaza (debug). El anillo verde es el Refugio (protege Parcela1). El Taller (gris, abajo) vende Sembradora y Cosechadora."
+	ayuda_label.text = "J1: WASD mover, E accion.  J2: flechas mover, ENTER accion.  C = ciclar cultivo (compartido).  T = forzar amenaza (debug). El anillo verde es el Refugio (protege Parcela1). El Taller (gris, abajo) vende Sembradora, Cosechadora y tiers de Silo. La torre dorada es el Silo -- cosechar suma ahi, un toque en el Silo lo vende todo."
 
 func _process(_delta: float) -> void:
 	var seleccionado: String = Cultivos.cultivo_seleccionado
@@ -26,7 +26,13 @@ func _process(_delta: float) -> void:
 		"comprada" if Maquinas.tiene_sembradora else "no comprada",
 		"comprada" if Maquinas.tiene_cosechadora else "no comprada",
 	]
-	cultivo_label.text = "Cultivo seleccionado: " + " | ".join(estados) + "   —   " + maquinas_txt
+	var silo_txt: String
+	if Silo.esta_desbloqueada_compra():
+		silo_txt = "Silo: $%d/$%d (tier %d/3)" % [Silo.valor_actual, Silo.capacidad(), Silo.tiers_comprados]
+	else:
+		var faltan: int = Silo.UMBRAL_DESBLOQUEO_VENTAS - Silo.ventas_totales_dinero
+		silo_txt = "Silo: $%d/$%d (ampliación bloqueada, faltan $%d en ventas)" % [Silo.valor_actual, Silo.capacidad(), faltan]
+	cultivo_label.text = "Cultivo seleccionado: " + " | ".join(estados) + "   —   " + maquinas_txt + "   —   " + silo_txt
 
 func _on_dinero_cambio(nuevo_monto: int) -> void:
 	dinero_label.text = "Pozo compartido: $%d" % nuevo_monto
